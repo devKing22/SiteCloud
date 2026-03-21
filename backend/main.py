@@ -17,9 +17,9 @@ load_dotenv()
 # ── Config ────────────────────────────────────────────────────────────────────
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")  # para admin ops
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-GITHUB_REPO = os.getenv("GITHUB_REPO")  # ex: "devKing22/openconfigs-storage"
+GITHUB_REPO = os.getenv("GITHUB_REPO")
 GITHUB_BRANCH = os.getenv("GITHUB_BRANCH", "main")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 
@@ -32,7 +32,7 @@ app = FastAPI(title="OpenConfigs API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # troca pelo domínio do seu site em prod
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
