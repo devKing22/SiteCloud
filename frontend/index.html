@@ -303,7 +303,7 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
     <div class="fg"><label>Nome</label><input type="text" id="uN" placeholder="ex: MushLegit_v3"></div>
     <div class="fg"><label>Nick</label><input type="text" id="uA" placeholder="ex: devKing22"></div>
     <div class="fg"><label>Client</label>
-      <select id="uC"><option value="augustus">Augustus</option><option value="astolfo">Astolfo</option><option value="slinky">Slinky</option><option value="myau">Myau</option><option value="myau+">Myau+</option><option value="avocado">Avocado</option><option value="vestigereborn">VestigeReborn</option></select>
+      <select id="uC"><option value="augustus">Augustus</option><option value="astolfo">Astolfo</option><option value="slinky">Slinky</option><option value="myau">Myau</option><option value="myau+">Myau+</option><option value="avocado">Avocado</option><option value="vestigereborn">VestigeReborn</option><option value="LiquidBounce">LiquidBounce NewGen</option></select>
     </div>
     <div class="fg"><label>Tipo</label>
       <select id="uT"><option value="legit">Legit</option><option value="blatant">Blatant</option><option value="ghost">Ghost</option></select>
@@ -527,7 +527,8 @@ function renderDL(){
     ['Myau+','https://github.com/IamNespola/OpenMyau-Plus/releases'],
     ['Avocado','https://www.mediafire.com/file/qc76zztrq689c6m/avocado-b1.5.jar/file'],
     ['VestigeR','https://www.mediafire.com/file/ieny7lgmzc7hglq/VestigeR+1.1.0-1.zip/file'],
-    ['Velarion(Legit)','https://github.com/4everdies/VelarioNsrc/releases/download/shitautohotkey/Velarion.exe']
+    ['Velarion(Legit)','https://github.com/4everdies/VelarioNsrc/releases/download/shitautohotkey/Velarion.exe'],
+    ['LiquidBounce Newgen(launcher.msi)','https://github.com/CCBlueX/LiquidLauncher/releases/download/v0.5.0/LiquidLauncher_0.5.0_x64_en-US.msi'],
   ];
   document.getElementById('dlList').innerHTML=links.map(([n,u])=>`<div class="ar"><div class="ar-info"><div class="ar-name">${esc(n)}</div><div class="ar-by">Link oficial</div></div><a class="btn btn-g btn-sm" href="${esc(u)}" target="_blank">DOWNLOAD</a></div>`).join('');
 }
