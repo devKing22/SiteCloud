@@ -183,7 +183,7 @@ async def create_config(
         raise HTTPException(status_code=400, detail="Apenas arquivos .json")
 
     content = await file.read()
-    if len(content) > 10 * 1024 * 1024:  # 10MB max
+if len(content) > 10 * 1024 * 1024:  # 10MB max
         raise HTTPException(status_code=400, detail="Arquivo muito grande (max 10MB)")
 
     # Valida JSON
@@ -210,11 +210,19 @@ async def create_config(
     }
     res = supabase.table("configs").insert(data).execute()
     return {"config": res.data[0]}
+    try:
+        # Usa service role no backend para evitar bloqueio por RLS
+        # (permissões de negócio já são validadas acima)
+        res = supabase_admin.table("configs").insert(data).execute()
+        return {"config": res.data[0]}
+    except Exception:
+        raise HTTPException(status_code=500, detail="Erro ao salvar config no banco")
 
 @app.delete("/configs/{config_id}")
 async def delete_config(config_id: int, user=Depends(get_supabase_user)):
     """Deleta config — só o dono ou admin."""
     res = supabase.table("configs").select("*").eq("id", config_id).execute()
+    res = supabase_admin.table("configs").select("*").eq("id", config_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Config não encontrada")
 
@@ -226,6 +234,7 @@ async def delete_config(config_id: int, user=Depends(get_supabase_user)):
         raise HTTPException(status_code=403, detail="Sem permissão")
 
     supabase.table("configs").delete().eq("id", config_id).execute()
+    supabase_admin.table("configs").delete().eq("id", config_id).execute()
     return {"message": "Config deletada"}
 
 # ── Admin Routes ──────────────────────────────────────────────────────────────
@@ -241,6 +250,7 @@ async def list_users(admin=Depends(require_admin)):
 async def admin_delete_config(config_id: int, admin=Depends(require_admin)):
     """Admin deleta qualquer config."""
     supabase.table("configs").delete().eq("id", config_id).execute()
+    supabase_admin.table("configs").delete().eq("id", config_id).execute()
     return {"message": "Config deletada pelo admin"}
 
 @app.get("/admin/stats")
