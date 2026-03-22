@@ -372,14 +372,33 @@ window.addEventListener('DOMContentLoaded',()=>{
 
 async function api(m,p,b,f){
   const h={};
-  if(token)h['Authorization']='Bearer '+token;
-  if(!f)h['Content-Type']='application/json';
-  const r=await fetch(API+p,{method:m,headers:h,body:f?b:b?JSON.stringify(b):undefined});
-  const d=await r.json().catch(()=>({}));
-  if(!r.ok)throw new Error(d.detail||'Erro');
+
+  if(token) h['Authorization']='Bearer '+token;
+
+  if(!f){
+    h['Content-Type']='application/json';
+  }
+
+  const r = await fetch(API+p,{
+    method: m,
+    headers: h,
+    body: f ? b : (b ? JSON.stringify(b) : undefined)
+  });
+
+  const text = await r.text();
+
+  let d;
+  try{
+    d = JSON.parse(text);
+  }catch{
+    console.log("RESPOSTA BRUTA:", text);
+    d = {};
+  }
+
+  if(!r.ok) throw new Error(d.detail || text || 'Erro');
+
   return d;
 }
-
 async function load(){
   const q=document.getElementById('si').value;
   const client=document.getElementById('clientFilter')?.value||'all';
