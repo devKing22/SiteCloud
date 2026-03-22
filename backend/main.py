@@ -104,6 +104,32 @@ async def upload_to_github(filename: str, content: bytes) -> str:
 
 # ── Auth Routes ───────────────────────────────────────────────────────────────
 
+@app.post("/auth/verify-otp")
+async def verify_otp(request: Request):
+    body = await request.json()
+    email = body.get("email", "").strip()
+    token = body.get("token", "").strip()  # código 6 dígitos
+
+    if not email or not token:
+        raise HTTPException(status_code=400, detail="Email e código obrigatórios")
+
+    try:
+        res = supabase.auth.verify_otp({
+            "email": email,
+            "token": token,
+            "type": "signup"  # ou "email" pra login sem senha
+        })
+        return {
+            "access_token": res.session.access_token,
+            "user": {
+                "id": res.user.id,
+                "email": res.user.email,
+                "is_admin": res.user.email == ADMIN_EMAIL,
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Código inválido ou expirado")
+
 @app.post("/auth/register")
 async def register(request: Request):
     body = await request.json()
