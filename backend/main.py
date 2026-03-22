@@ -220,14 +220,12 @@ async def create_config(
             raise HTTPException(status_code=400, detail="Arquivo JSON inválido")
 
     # Upload GitHub
-    safe_name = sanitize_text(name)
     import uuid
 
     safe_name = sanitize_text(name)
-    uid = uuid.uuid4().hex[:6]
+    uid = uuid.uuid4().hex[:2]
 
     filename = f"{safe_name}-{client}-{uid}.json"
-    safe_name = sanitize_text(name, 50).replace(" ", "_")
     ext = ".txt" if file.filename.endswith(".txt") else ".json"
     file_url = await upload_to_github(filename, content)
 
