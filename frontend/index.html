@@ -535,19 +535,19 @@ async function doReg(){
       vp.id = 'pVerify';
       vp.className = 'tp on';
       vp.innerHTML = `
-  <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);margin-bottom:14px;line-height:1.7">
-    Código enviado para <b style="color:var(--accent)">${e}</b>.<br>Verifique sua caixa de entrada.
+  <div style='font-family:var(--font-mono);font-size:11px;color:var(--text-dim);margin-bottom:14px;line-height:1.7'>
+    Código enviado para <b style='color:var(--accent)'>${e}</b>.<br>Verifique sua caixa de entrada.
   </div>
-  <div class="fg">
+  <div class='fg'>
     <label>Código de 6 dígitos</label>
-    <input type="text" id="vCode" maxlength="6" placeholder="000000"
-      style="letter-spacing:6px;font-size:18px;text-align:center"
-      oninput="this.value=this.value.replace(/\\D/g,'')"
-      onkeydown="if(event.key==='Enter')doVerify()">
+    <input type='text' id='vCode' maxlength='6' placeholder='000000'
+      style='letter-spacing:6px;font-size:18px;text-align:center'
+      oninput='this.value=this.value.replace(/\\D/g,"")'
+      onkeydown='if(event.key==="Enter")doVerify()'>
   </div>
-  <div class="mf">
-    <button class="btn btn-o" onclick="swTab('register')">Voltar</button>
-    <button class="btn btn-g" onclick="doVerify()">VERIFICAR</button>
+  <div class='mf'>
+    <button class='btn btn-o' onclick='swTab("register")'>Voltar</button>
+    <button class='btn btn-g' onclick='doVerify()'>VERIFICAR</button>
   </div>
 `;
       document.getElementById('pRegister').parentNode.appendChild(vp);
