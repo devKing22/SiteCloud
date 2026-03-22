@@ -183,7 +183,7 @@ async def create_config(
         raise HTTPException(status_code=400, detail="Apenas arquivos .json")
 
     content = await file.read()
-if len(content) > 10 * 1024 * 1024:  # 10MB max
+    if len(content) > 10 * 1024 * 1024:  # 10MB max
         raise HTTPException(status_code=400, detail="Arquivo muito grande (max 10MB)")
 
     # Valida JSON
@@ -208,13 +208,6 @@ if len(content) > 10 * 1024 * 1024:  # 10MB max
         "server": sanitize_text(server, 50),
         "user_id": str(user.id),
     }
-    try:
-        # Usa service role no backend para evitar bloqueio por RLS
-        # (permissões de negócio já são validadas acima)
-        res = supabase_admin.table("configs").insert(data).execute()
-        return {"config": res.data[0]}
-    except Exception:
-        raise HTTPException(status_code=500, detail="Erro ao salvar config no banco")
     try:
         # Usa service role no backend para evitar bloqueio por RLS
         # (permissões de negócio já são validadas acima)
