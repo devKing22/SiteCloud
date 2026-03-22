@@ -590,11 +590,19 @@ async function doVerify(){
 function doLogout(){user=null;token=null;localStorage.removeItem('mc_s');updH();load();showToast('Logout realizado');}
 
 function updH(){
-  const div=document.getElementById('hauth');
+  const div = document.getElementById('hauth');
   if(user){
-    div.innerHTML=`<div style="display:flex;align-items:center;gap:7px">${user.is_admin?'<button class="btn btn-o btn-sm" onclick="openAdm()">⚔ ADMIN</button>':''}<button class="btn btn-g btn-sm" onclick="openUp()">↑ UPLOAD</button><div class="uc" onclick="doLogout()" title="Sair"><div class="uav">${user.email[0].toUpperCase()}</div><span class="uem">${user.email.split('@')[0]}</span>${user.is_admin?'<span class="admbadge">ADMIN</span>':''}</div></div>`;
-  }else{
-    div.innerHTML='<button class="btn btn-o btn-sm" onclick="openAuth(\'login\')">LOGIN</button><button class="btn btn-g btn-sm" onclick="openAuth(\'register\')">CADASTRAR</button>';
+    let html = '<div style="display:flex;align-items:center;gap:7px">';
+    if(user.is_admin) html += '<button class="btn btn-o btn-sm" onclick="openAdm()">⚔ ADMIN</button>';
+    html += '<button class="btn btn-g btn-sm" onclick="openUp()">↑ UPLOAD</button>';
+    html += '<div class="uc" onclick="doLogout()" title="Sair">';
+    html += '<div class="uav">' + user.email[0].toUpperCase() + '</div>';
+    html += '<span class="uem">' + user.email.split('@')[0] + '</span>';
+    if(user.is_admin) html += '<span class="admbadge">ADMIN</span>';
+    html += '</div></div>';
+    div.innerHTML = html;
+  } else {
+    div.innerHTML = '<button class="btn btn-o btn-sm" onclick="openAuth(\'login\')">LOGIN</button><button class="btn btn-g btn-sm" onclick="openAuth(\'register\')">CADASTRAR</button>';
   }
 }
 
