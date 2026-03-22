@@ -27,15 +27,11 @@
 }
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 body { background:var(--bg); color:var(--text); font-family:var(--font-body); min-height:100vh; overflow-x:hidden; }
-
 body::before {
   content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
   background: repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.025) 3px,rgba(0,0,0,0.025) 4px);
 }
-
 .bg-blob { position:fixed; top:-200px; left:50%; transform:translateX(-50%); width:700px; height:500px; background:radial-gradient(ellipse,rgba(0,229,160,.05) 0%,transparent 65%); pointer-events:none; z-index:0; }
-
-/* HEADER */
 header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-items:center; justify-content:space-between; padding:0 28px; background:rgba(8,9,9,.94); border-bottom:1px solid var(--border); backdrop-filter:blur(16px); }
 .logo { display:flex; align-items:center; gap:9px; cursor:pointer; text-decoration:none; user-select:none; }
 .logo-mark { width:30px; height:30px; border:1.5px solid var(--accent); border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:15px; box-shadow:0 0 14px var(--accent-glow); animation:glow-pulse 3s ease-in-out infinite; }
@@ -46,8 +42,6 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
 .pill { display:flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:10px; color:var(--text-dim); background:var(--surface); border:1px solid var(--border); padding:4px 11px; border-radius:4px; }
 .dot-live { width:5px; height:5px; border-radius:50%; background:var(--accent); box-shadow:0 0 5px var(--accent); animation:blink 2s ease infinite; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
-
-/* BUTTONS */
 .btn { display:inline-flex; align-items:center; gap:6px; padding:7px 15px; border-radius:4px; font-family:var(--font-mono); font-size:10px; font-weight:700; cursor:pointer; border:none; transition:all .18s; letter-spacing:.8px; text-transform:uppercase; text-decoration:none; }
 .btn-g { background:var(--accent); color:#000; }
 .btn-g:hover { filter:brightness(1.1); transform:translateY(-1px); box-shadow:0 4px 18px var(--accent-glow); }
@@ -56,8 +50,6 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
 .btn-r { background:var(--red-dim); color:var(--red); border:1px solid rgba(255,77,109,.2); }
 .btn-r:hover { background:var(--red); color:#fff; }
 .btn-sm { padding:5px 11px; font-size:9px; }
-
-/* HERO */
 .hero { position:relative; z-index:1; padding:72px 28px 48px; text-align:center; }
 .hero-tag { display:inline-flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:10px; color:var(--accent); letter-spacing:2px; text-transform:uppercase; padding:4px 12px; border:1px solid rgba(0,229,160,.18); border-radius:3px; background:var(--accent-dim); margin-bottom:22px; }
 .hero h1 { font-family:var(--font-display); font-size:clamp(80px,13vw,150px); letter-spacing:3px; line-height:.88; color:var(--text); margin-bottom:4px; }
@@ -69,8 +61,6 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
 .hnum:last-child { border-right:none; }
 .hnum .n { font-family:var(--font-display); font-size:32px; color:var(--accent); line-height:1; text-shadow:0 0 18px var(--accent-glow); }
 .hnum .l { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
-
-/* SERVERS */
 .servers { position:relative; z-index:1; display:flex; align-items:center; justify-content:center; gap:7px; padding:18px 28px 0; flex-wrap:wrap; }
 .srv-label { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-right:4px; }
 .srv { display:flex; align-items:center; gap:5px; padding:6px 14px; border-radius:3px; font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; border:1px solid; cursor:pointer; transition:all .18s; user-select:none; }
@@ -80,8 +70,6 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
 .srv-hylex:hover, .srv-hylex.on { background:rgba(77,166,255,.14); border-color:rgba(77,166,255,.45); box-shadow:0 0 10px rgba(77,166,255,.18); }
 .srv-kaizen { color:#b06fff; border-color:rgba(176,111,255,.18); background:rgba(176,111,255,.05); }
 .srv-kaizen:hover, .srv-kaizen.on { background:rgba(176,111,255,.14); border-color:rgba(176,111,255,.45); box-shadow:0 0 10px rgba(176,111,255,.18); }
-
-/* CONTROLS */
 .controls { position:relative; z-index:1; max-width:920px; margin:28px auto 0; padding:0 28px 28px; display:flex; flex-direction:column; gap:12px; align-items:center; }
 .sw { position:relative; width:100%; max-width:460px; }
 .si { position:absolute; left:13px; top:50%; transform:translateY(-50%); font-family:var(--font-mono); font-size:11px; color:var(--text-muted); pointer-events:none; }
@@ -91,16 +79,10 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
 .ftags { display:flex; gap:5px; flex-wrap:wrap; justify-content:center; }
 .ft { font-family:var(--font-mono); font-size:10px; padding:4px 11px; border-radius:3px; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); cursor:pointer; transition:all .14s; letter-spacing:.5px; text-transform:uppercase; }
 .ft:hover, .ft.on { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
-
-/* GRID HEADER */
 .gh { position:relative; z-index:1; max-width:1260px; margin:0 auto; padding:0 28px 14px; display:flex; align-items:center; gap:10px; }
 .gh span { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; white-space:nowrap; }
 .gl { flex:1; height:1px; background:var(--border); }
-
-/* GRID */
 .grid { position:relative; z-index:1; max-width:1260px; margin:0 auto; padding:0 28px 100px; display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:10px; }
-
-/* CARD */
 .card { background:var(--surface); border:1px solid var(--border); border-radius:5px; display:flex; flex-direction:column; transition:all .2s; animation:ci .3s ease both; position:relative; overflow:hidden; }
 @keyframes ci { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 .card::after { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--accent-glow),transparent); opacity:0; transition:opacity .3s; }
@@ -114,8 +96,6 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
 .t-legit { background:rgba(0,229,160,.08); color:#00e5a0; border:1px solid rgba(0,229,160,.2); }
 .t-closet { background:rgba(176,111,255,.08); color:#b06fff; border:1px solid rgba(176,111,255,.2); }
 .t-blatant { background:rgba(255,77,109,.08); color:#ff4d6d; border:1px solid rgba(255,77,109,.2); }
-.t-bedwars { background:rgba(255,209,102,.08); color:#ffd166; border:1px solid rgba(255,209,102,.2); }
-.t-pvp { background:rgba(77,166,255,.08); color:#4da6ff; border:1px solid rgba(77,166,255,.2); }
 .t-outro { background:rgba(150,150,150,.08); color:#888; border:1px solid rgba(150,150,150,.2); }
 .cm { padding:11px 15px; flex:1; }
 .cdesc { font-size:12px; color:var(--text-dim); line-height:1.65; font-weight:300; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
@@ -132,8 +112,6 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
 .dlb:hover { background:var(--accent); color:#000; border-color:var(--accent); }
 .delb { display:flex; align-items:center; background:transparent; border:1px solid var(--border); color:var(--text-muted); padding:5px 8px; border-radius:3px; cursor:pointer; font-size:11px; transition:all .14s; }
 .delb:hover { background:var(--red); color:#fff; border-color:var(--red); }
-
-/* EMPTY / LOADING */
 .empty { grid-column:1/-1; text-align:center; padding:70px 20px; }
 .empty-ico { font-size:44px; margin-bottom:12px; filter:grayscale(1) opacity(.35); }
 .empty p { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); }
@@ -141,8 +119,6 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
 .sp { width:22px; height:22px; margin:0 auto 12px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; }
 @keyframes spin { to{transform:rotate(360deg)} }
 .loading p { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); }
-
-/* OVERLAY/MODAL */
 .ov { display:none; position:fixed; inset:0; background:rgba(0,0,0,.82); z-index:200; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
 .ov.open { display:flex; }
 .modal { background:var(--surface); border:1px solid var(--border-hi); border-radius:7px; padding:26px; width:100%; max-width:430px; animation:ci .18s ease; max-height:92vh; overflow-y:auto; }
@@ -171,8 +147,6 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
 .ab { padding:9px 12px; border-radius:4px; font-family:var(--font-mono); font-size:11px; margin-bottom:13px; }
 .ab-ok { background:rgba(0,229,160,.07); border:1px solid rgba(0,229,160,.22); color:var(--accent); }
 .ab-err { background:var(--red-dim); border:1px solid rgba(255,77,109,.22); color:var(--red); }
-
-/* ADMIN */
 .sg { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:18px; }
 .sb { background:var(--bg2); border:1px solid var(--border); border-radius:4px; padding:12px; text-align:center; }
 .sb .sn { font-family:var(--font-display); font-size:30px; color:var(--accent); text-shadow:0 0 14px var(--accent-glow); }
@@ -182,18 +156,14 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
 .ar-info { font-family:var(--font-mono); font-size:11px; }
 .ar-name { color:var(--text); }
 .ar-by { color:var(--text-muted); font-size:10px; }
-
-/* USER CHIP */
 .uc { display:flex; align-items:center; gap:6px; background:var(--surface2); border:1px solid var(--border); padding:4px 11px 4px 5px; border-radius:4px; cursor:pointer; transition:border-color .14s; }
 .uc:hover { border-color:var(--border-hi); }
 .uav { width:22px; height:22px; border-radius:3px; background:var(--accent); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:11px; font-weight:700; color:#000; }
 .uem { font-family:var(--font-mono); font-size:10px; color:var(--text-dim); }
 .admbadge { font-family:var(--font-mono); font-size:8px; font-weight:700; background:var(--accent); color:#000; padding:1px 5px; border-radius:2px; }
-
 .toast { position:fixed; bottom:22px; right:22px; background:var(--surface2); border:1px solid var(--accent); color:var(--text); padding:10px 16px; border-radius:4px; font-family:var(--font-mono); font-size:11px; z-index:999; transform:translateY(60px); opacity:0; transition:all .26s; max-width:270px; }
 .toast.show { transform:translateY(0); opacity:1; }
 .toast.err { border-color:var(--red); }
-
 #fileInput { display:none; }
 ::-webkit-scrollbar { width:5px; }
 ::-webkit-scrollbar-track { background:var(--bg); }
@@ -221,10 +191,10 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
 </header>
 
 <div class="hero">
-  <div class="hero-tag"> A Paradise for configs</div>
+  <div class="hero-tag">A Paradise for configs</div>
   <h1><span class="hi">HYRIA</span></h1>
   <div class="hero-sub">Config Cloud</div>
-  <p>Repositório de configs da comunidade HvH,Blatant ou Legit. Baixe, compartilhe e domine.</p>
+  <p>Repositório de configs da comunidade HvH, Blatant ou Legit. Baixe, compartilhe e domine.</p>
   <div class="hero-nums">
     <div class="hnum"><div class="n" id="sTotal">—</div><div class="l">Total</div></div>
     <div class="hnum"><div class="n" id="sLegit">—</div><div class="l">Legit</div></div>
@@ -234,10 +204,10 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
 
 <div class="servers">
   <span class="srv-label">Servidor:</span>
-  <div class="srv srv-mush" onclick="toggleSrv('mush',this)"> Mush</div>
-  <div class="srv srv-hylex" onclick="toggleSrv('hylex',this)"> Hylex</div>
-  <div class="srv srv-kaizen" onclick="toggleSrv('kaizen',this)"> Kaizen</div>
-  <div class="srv" onclick="toggleSrv('outro',this)"> Outro</div>
+  <div class="srv srv-mush" onclick="toggleSrv('mush',this)">Mush</div>
+  <div class="srv srv-hylex" onclick="toggleSrv('hylex',this)">Hylex</div>
+  <div class="srv srv-kaizen" onclick="toggleSrv('kaizen',this)">Kaizen</div>
+  <div class="srv" onclick="toggleSrv('outro',this)">Outro</div>
 </div>
 
 <div class="controls">
@@ -247,27 +217,31 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
   </div>
   <div class="fg" style="max-width:460px;margin:8px auto 0">
     <label>Client</label>
-<select id="clientFilter" onchange="load()">
-  <option value="all">Todos</option>
-  <option value="augustus">Augustus(1.8.9)</option>
-  <option value="astolfo">Astolfo(1.8.9)</option>
-  <option value="slinky">Slinky(1.8.9)</option>
-  <option value="myau">Myau(1.8.9t)</option>
-  <option value="myau+">Myau+(1.8.9)</option>
-  <option value="avocado">Avocado(1.8.9)</option>
-  <option value="vestigereborn">VestigeReborn(1.8.9)</option>
-  <option value="LiquidBounce">LiquidBounce NewGen(1.7 to 1.21.x)</option>
-  <option value="Velarion">Velarion(1.8.9)</option>
-  <option value="catlean">CatLean(1.21.10/11 HvH)</option>
-  <option value="mio">Mio Client(1.21.1/5 HvH)</option>
-  <option value="doomsday">DoomsDay(1.8x-1.21x)</option>
-  <option value="exhibition">Exhibition(HvH 1.8.9)</option>
-  <option value="ihatehg">IHateHg(1.8.9)</option>
-</select>
+    <select id="clientFilter" onchange="load()">
+      <option value="all">Todos</option>
+      <option value="augustus">Augustus (1.8.9)</option>
+      <option value="astolfo">Astolfo (1.8.9)</option>
+      <option value="slinky">Slinky (1.8.9)</option>
+      <option value="myau">Myau (1.8.9)</option>
+      <option value="myau+">Myau+ (1.8.9)</option>
+      <option value="avocado">Avocado (1.8.9)</option>
+      <option value="vestigereborn">VestigeReborn (1.8.9)</option>
+      <option value="LiquidBounce">LiquidBounce NewGen (1.7-1.21.x)</option>
+      <option value="Velarion">Velarion (1.8.9)</option>
+      <option value="catlean">CatLean (1.21.x HvH)</option>
+      <option value="mio">Mio Client (1.21.x HvH)</option>
+      <option value="doomsday">DoomsDay (1.8x-1.21x)</option>
+      <option value="exhibition">Exhibition (HvH 1.8.9)</option>
+      <option value="ihatehg">IHateHg (1.8.9)</option>
+    </select>
   </div>
   <div class="fg" style="max-width:460px;margin:8px auto 0">
     <label>Formato</label>
-    <select id="extFilter" onchange="load()"><option value="all">Todos</option><option value="json">JSON</option><option value="txt">TXT</option></select>
+    <select id="extFilter" onchange="load()">
+      <option value="all">Todos</option>
+      <option value="json">JSON</option>
+      <option value="txt">TXT</option>
+    </select>
   </div>
   <div class="ftags">
     <span class="ft on" onclick="setF('all',this)">Todas</span>
@@ -317,34 +291,43 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
     <div class="fg"><label>Nome</label><input type="text" id="uN" placeholder="ex: MushLegit_v3"></div>
     <div class="fg"><label>Nick</label><input type="text" id="uA" placeholder="ex: devKing22"></div>
     <div class="fg"><label>Client</label>
-     <select id="uC">
-  <option value="augustus">Augustus(1.8.9)</option>
-  <option value="astolfo">Astolfo(1.8.9)</option>
-  <option value="slinky">Slinky(1.8.9)</option>
-  <option value="myau">Myau(1.8.9t)</option>
-  <option value="myau+">Myau+(1.8.9)</option>
-  <option value="avocado">Avocado(1.8.9)</option>
-  <option value="vestigereborn">VestigeReborn(1.8.9)</option>
-  <option value="LiquidBounce">LiquidBounce NewGen(1.7 to 1.21.x)</option>
-  <option value="Velarion">Velarion(1.8.9)</option>
-  <option value="catlean">CatLean(1.21.10/11 HvH)</option>
-  <option value="mio">Mio Client(1.21.1/5 HvH)</option>
-  <option value="doomsday">DoomsDay(1.8x-1.21x)</option>
-  <option value="exhibition">Exhibition(HvH 1.8.9)</option>
-  <option value="ihatehg">IHateHg(1.8.9)</option>
+      <select id="uC">
+        <option value="augustus">Augustus (1.8.9)</option>
+        <option value="astolfo">Astolfo (1.8.9)</option>
+        <option value="slinky">Slinky (1.8.9)</option>
+        <option value="myau">Myau (1.8.9)</option>
+        <option value="myau+">Myau+ (1.8.9)</option>
+        <option value="avocado">Avocado (1.8.9)</option>
+        <option value="vestigereborn">VestigeReborn (1.8.9)</option>
+        <option value="LiquidBounce">LiquidBounce NewGen (1.7-1.21.x)</option>
+        <option value="Velarion">Velarion (1.8.9)</option>
+        <option value="catlean">CatLean (1.21.x HvH)</option>
+        <option value="mio">Mio Client (1.21.x HvH)</option>
+        <option value="doomsday">DoomsDay (1.8x-1.21x)</option>
+        <option value="exhibition">Exhibition (HvH 1.8.9)</option>
+        <option value="ihatehg">IHateHg (1.8.9)</option>
       </select>
     </div>
     <div class="fg"><label>Tipo</label>
-      <select id="uT"><option value="legit">Legit</option><option value="blatant">Blatant</option><option value="ghost">Ghost</option></select>
+      <select id="uT">
+        <option value="legit">Legit</option>
+        <option value="blatant">Blatant</option>
+        <option value="ghost">Ghost</option>
+      </select>
     </div>
     <div class="fg"><label>Servidor</label>
-      <select id="uS"><option value="mush"> Mush</option><option value="hylex"> Hylex</option><option value="kaizen"> Kaizen</option><option value="outro">Outro</option></select>
+      <select id="uS">
+        <option value="mush">Mush</option>
+        <option value="hylex">Hylex</option>
+        <option value="kaizen">Kaizen</option>
+        <option value="outro">Outro</option>
+      </select>
     </div>
     <div class="fg"><label>Descrição</label><textarea id="uD" placeholder="Para qual gamemode? O que está configurado?"></textarea></div>
     <div class="fg">
-      <label>Arquivo .json/.txt</label>
+      <label>Arquivo .json / .txt / sem extensão</label>
       <div class="dz" id="dz" onclick="document.getElementById('fileInput').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="hDrop(event)">
-        <div class="dz-ico">📁</div><p><b>Clique ou arraste</b> o .json</p>
+        <div class="dz-ico">📁</div><p><b>Clique ou arraste</b> o arquivo</p>
       </div>
       <div class="fn" id="fn"></div>
       <input type="file" id="fileInput" onchange="hFile(this)">
@@ -386,172 +369,224 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
 <div class="toast" id="toast"></div>
 
 <script>
-const API = '/api';
-const TC = {legit:'t-legit',blatant:'t-blatant',ghost:'t-closet'};
-const SC = {mush:'s-mush',hylex:'s-hylex',kaizen:'s-kaizen'};
-const SE = {mush:'',hylex:'',kaizen:''};
+var API = '/api';
+var TC = {legit:'t-legit',blatant:'t-blatant',ghost:'t-closet'};
+var SC = {mush:'s-mush',hylex:'s-hylex',kaizen:'s-kaizen'};
+var SE = {mush:'',hylex:'',kaizen:''};
 
-let user=null,token=null,filter='all',srvFilter=null,uFile=null,st=null;
+var user=null, token=null, filter='all', srvFilter=null, uFile=null, st=null;
 
-window.addEventListener('DOMContentLoaded',()=>{
-  const s=localStorage.getItem('mc_s');
-  if(s){const d=JSON.parse(s);token=d.t;user=d.u;updH();}
+window.addEventListener('DOMContentLoaded', function() {
+  var s = localStorage.getItem('mc_s');
+  if(s){ var d=JSON.parse(s); token=d.t; user=d.u; updH(); }
   load();
 });
 
 async function api(m, p, b, f) {
-  const h = {};
-  if (token) h['Authorization'] = 'Bearer ' + token;
-  if (!f) h['Content-Type'] = 'application/json';
-
-  const r = await fetch(API + p, {
+  var h = {};
+  if(token) h['Authorization'] = 'Bearer ' + token;
+  if(!f) h['Content-Type'] = 'application/json';
+  var r = await fetch(API + p, {
     method: m,
     headers: h,
     body: f ? b : (b ? JSON.stringify(b) : undefined)
   });
-
-  const text = await r.text();
-  let d;
-  try {
-    d = JSON.parse(text);
-  } catch {
-    console.log("RESPOSTA BRUTA:", text); // ← vai mostrar o HTML no console
-    d = {};
-  }
-
-  if (r.status === 401) {
-    user = null;
-    token = null;
+  var text = await r.text();
+  var d;
+  try { d = JSON.parse(text); } catch(e) { console.log('RESPOSTA BRUTA:', text); d = {}; }
+  if(r.status === 401) {
+    user=null; token=null;
     localStorage.removeItem('mc_s');
     updH();
-    showToast('⚠ Sessão expirada, faça login novamente.', true);
-    throw new Error('Sessão expirada');
+    showToast('Sessao expirada, faca login novamente.', true);
+    throw new Error('Sessao expirada');
   }
-
-  if (!r.ok) throw new Error(d.detail || text || 'Erro');
+  if(!r.ok) throw new Error(d.detail || text || 'Erro');
   return d;
 }
 
 async function forceDownload(url, name) {
   try {
-    const r = await fetch(url);
-    const blob = await r.blob();
-    const a = document.createElement('a');
+    var r = await fetch(url);
+    var blob = await r.blob();
+    var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = name + '.json';
+    a.download = name;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(a.href);
   } catch(e) {
-    showToast('⚠ Erro ao baixar: ' + e.message, true);
-  }
-}
-  
-async function load(){
-  const q=document.getElementById('si').value;
-  const client=document.getElementById('clientFilter')?.value||'all';
-  const ext=document.getElementById('extFilter')?.value||'all';
-  let url='/configs?';
-  if(filter!=='all')url+=`type=${filter}&`;
-  if(client!=='all')url+=`client=${encodeURIComponent(client)}&`;
-  if(srvFilter)url+=`server=${encodeURIComponent(srvFilter)}&`;
-  if(q)url+=`search=${encodeURIComponent(q)}`;
-  try{
-    const d=await api('GET',url);
-    let list=d.configs||[];
-    if(ext!=='all')list=list.filter(c=>(c.file_url||'').toLowerCase().endsWith('.'+ext));
-    render(list);
-    const tot=list.length||0;
-    document.getElementById('configCount').textContent=tot;
-    document.getElementById('sTotal').textContent=tot;
-    document.getElementById('sLegit').textContent=d.configs?.filter(c=>c.type==='legit').length||0;
-    document.getElementById('sBlatant').textContent=d.configs?.filter(c=>c.type==='blatant').length||0;
-  }catch(e){
-    document.getElementById('grid').innerHTML=`<div class="empty"><div class="empty-ico">⚠️</div><p>Erro: ${e.message}</p></div>`;
+    showToast('Erro ao baixar: ' + e.message, true);
   }
 }
 
-function render(list){
-  document.getElementById('rCount').textContent=list.length+' resultado'+(list.length!==1?'s':'');
-  if(!list.length){document.getElementById('grid').innerHTML='<div class="empty"><div class="empty-ico"></div><p>Nenhuma config encontrada.</p></div>';return;}
-  document.getElementById('grid').innerHTML=list.map((c,i)=>{
-    const tc=TC[c.type]||'t-outro';
-    const sc=SC[c.server]||'';
-    const se=SE[c.server]||'';
-    const date=c.created_at?c.created_at.split('T')[0]:'—';
-    const canDel=user&&(user.is_admin||user.id===c.user_id);
-    const desc=c.desc?`<p class="cdesc">${esc(c.desc)}</p>`:`<p class="cdesc nd">Sem descrição.</p>`;
-    const stag=c.server?`<span class="stag ${sc}">${se} ${c.server}</span>`:'';
-    const ctag=c.client?`<span class="stag">${esc(c.client)}</span>`:'';
-    return `<div class="card" style="animation-delay:${(i%12)*22}ms">
-      <div class="ct"><div><div class="cn">${esc(c.name)}.json</div><div class="cby">by <b>${esc(c.author)}</b></div></div><span class="ttag ${tc}">${c.type}</span></div>
-      <div class="cm">${desc}<div class="ctags">${ctag}${stag}</div></div>
-      <div class="cb"><span class="cdate">${date}</span><div class="cacts"><button class="dlb" onclick="forceDownload('${esc(c.file_url)}','${esc(c.name)}')">↓ DL</button>${canDel?`<button class="delb" onclick="delCfg(${c.id})">🗑</button>`:''}</div></div>
-  }).join('');
-}
-
-function setF(f,el){filter=f;document.querySelectorAll('.ft').forEach(t=>t.classList.remove('on'));el.classList.add('on');load();}
-function toggleSrv(s,el){if(srvFilter===s){srvFilter=null;el.classList.remove('on');}else{srvFilter=s;document.querySelectorAll('.srv').forEach(b=>b.classList.remove('on'));el.classList.add('on');}load();}
-function deb(){clearTimeout(st);st=setTimeout(load,360);}
-
-function openAuth(t='login'){document.getElementById('authOv').classList.add('open');swTab(t);}
-function closeAuth(){document.getElementById('authOv').classList.remove('open');document.getElementById('aAlert').innerHTML='';}
-document.getElementById('authOv').addEventListener('click',e=>{if(e.target===e.currentTarget)closeAuth();});
-function swTab(t){
-  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
-  document.querySelectorAll('.tp').forEach(p=>p.classList.remove('on'));
-  document.getElementById('t'+t[0].toUpperCase()+t.slice(1)).classList.add('on');
-  document.getElementById('p'+t[0].toUpperCase()+t.slice(1)).classList.add('on');
-  document.getElementById('aAlert').innerHTML='';
-}
-
-async function doLogin(){
-  const e=document.getElementById('lE').value.trim(),p=document.getElementById('lP').value;
-  if(!e||!p)return setAA('Preencha todos os campos');
-  try{const d=await api('POST','/auth/login',{email:e,password:p});token=d.access_token;user=d.user;localStorage.setItem('mc_s',JSON.stringify({t:token,u:user}));closeAuth();updH();load();showToast('✓ Bem-vindo, '+e.split('@')[0]+'!');}
-  catch(err){setAA(err.message);}
-}
-
-async function doReg(){
-  const e = document.getElementById('rE').value.trim();
-  const p = document.getElementById('rP').value;
-  if(!e || !p) return setAA('Preencha todos os campos');
-  if(p.length < 8) return setAA('Senha muito curta (mín. 8)');
+async function load() {
+  var q = document.getElementById('si').value;
+  var client = document.getElementById('clientFilter') ? document.getElementById('clientFilter').value : 'all';
+  var ext = document.getElementById('extFilter') ? document.getElementById('extFilter').value : 'all';
+  var url = '/configs?';
+  if(filter !== 'all') url += 'type=' + filter + '&';
+  if(client !== 'all') url += 'client=' + encodeURIComponent(client) + '&';
+  if(srvFilter) url += 'server=' + encodeURIComponent(srvFilter) + '&';
+  if(q) url += 'search=' + encodeURIComponent(q);
   try {
-    await api('POST', '/auth/register', { email: e, password: p });
-    document.getElementById('aAlert').innerHTML = '';
-    document.querySelectorAll('.tp').forEach(t => t.classList.remove('on'));
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+    var d = await api('GET', url);
+    var list = d.configs || [];
+    if(ext !== 'all') list = list.filter(function(c){ return (c.file_url||'').toLowerCase().endsWith('.' + ext); });
+    render(list);
+    var tot = list.length || 0;
+    document.getElementById('configCount').textContent = tot;
+    document.getElementById('sTotal').textContent = tot;
+    document.getElementById('sLegit').textContent = (d.configs || []).filter(function(c){ return c.type==='legit'; }).length;
+    document.getElementById('sBlatant').textContent = (d.configs || []).filter(function(c){ return c.type==='blatant'; }).length;
+  } catch(e) {
+    document.getElementById('grid').innerHTML = '<div class="empty"><div class="empty-ico">⚠️</div><p>Erro: ' + e.message + '</p></div>';
+  }
+}
 
-    let vp = document.getElementById('pVerify');
-    if(!vp){
+function render(list) {
+  document.getElementById('rCount').textContent = list.length + ' resultado' + (list.length !== 1 ? 's' : '');
+  if(!list.length) {
+    document.getElementById('grid').innerHTML = '<div class="empty"><div class="empty-ico"></div><p>Nenhuma config encontrada.</p></div>';
+    return;
+  }
+  var html = '';
+  for(var i=0; i<list.length; i++) {
+    var c = list[i];
+    var tc = TC[c.type] || 't-outro';
+    var sc = SC[c.server] || '';
+    var se = SE[c.server] || '';
+    var date = c.created_at ? c.created_at.split('T')[0] : '—';
+    var canDel = user && (user.is_admin || user.id === c.user_id);
+    var desc = c.desc ? '<p class="cdesc">' + esc(c.desc) + '</p>' : '<p class="cdesc nd">Sem descricao.</p>';
+    var stag = c.server ? '<span class="stag ' + sc + '">' + se + ' ' + c.server + '</span>' : '';
+    var ctag = c.client ? '<span class="stag">' + esc(c.client) + '</span>' : '';
+    var delBtn = canDel ? '<button class="delb" onclick="delCfg(' + c.id + ')">🗑</button>' : '';
+    html += '<div class="card" style="animation-delay:' + ((i%12)*22) + 'ms">';
+    html += '<div class="ct"><div><div class="cn">' + esc(c.name) + '</div><div class="cby">by <b>' + esc(c.author) + '</b></div></div><span class="ttag ' + tc + '">' + c.type + '</span></div>';
+    html += '<div class="cm">' + desc + '<div class="ctags">' + ctag + stag + '</div></div>';
+    html += '<div class="cb"><span class="cdate">' + date + '</span><div class="cacts">';
+    html += '<button class="dlb" onclick="forceDownload(\'' + esc(c.file_url) + '\',\'' + esc(c.name) + '\')">↓ DL</button>';
+    html += delBtn;
+    html += '</div></div></div>';
+  }
+  document.getElementById('grid').innerHTML = html;
+}
+
+function setF(f, el) {
+  filter = f;
+  document.querySelectorAll('.ft').forEach(function(t){ t.classList.remove('on'); });
+  el.classList.add('on');
+  load();
+}
+
+function toggleSrv(s, el) {
+  if(srvFilter === s) {
+    srvFilter = null;
+    el.classList.remove('on');
+  } else {
+    srvFilter = s;
+    document.querySelectorAll('.srv').forEach(function(b){ b.classList.remove('on'); });
+    el.classList.add('on');
+  }
+  load();
+}
+
+function deb() { clearTimeout(st); st = setTimeout(load, 360); }
+
+function openAuth(t) {
+  if(!t) t = 'login';
+  document.getElementById('authOv').classList.add('open');
+  swTab(t);
+}
+function closeAuth() {
+  document.getElementById('authOv').classList.remove('open');
+  document.getElementById('aAlert').innerHTML = '';
+}
+document.getElementById('authOv').addEventListener('click', function(e){ if(e.target===e.currentTarget) closeAuth(); });
+
+function swTab(t) {
+  document.querySelectorAll('.tab').forEach(function(b){ b.classList.remove('on'); });
+  document.querySelectorAll('.tp').forEach(function(p){ p.classList.remove('on'); });
+  var tId = 't' + t[0].toUpperCase() + t.slice(1);
+  var pId = 'p' + t[0].toUpperCase() + t.slice(1);
+  var tEl = document.getElementById(tId);
+  var pEl = document.getElementById(pId);
+  if(tEl) tEl.classList.add('on');
+  if(pEl) pEl.classList.add('on');
+  document.getElementById('aAlert').innerHTML = '';
+}
+
+async function doLogin() {
+  var e = document.getElementById('lE').value.trim();
+  var p = document.getElementById('lP').value;
+  if(!e || !p) return setAA('Preencha todos os campos');
+  try {
+    var d = await api('POST', '/auth/login', {email:e, password:p});
+    token = d.access_token;
+    user = d.user;
+    localStorage.setItem('mc_s', JSON.stringify({t:token, u:user}));
+    closeAuth();
+    updH();
+    load();
+    showToast('Bem-vindo, ' + e.split('@')[0] + '!');
+  } catch(err) { setAA(err.message); }
+}
+
+async function doReg() {
+  var e = document.getElementById('rE').value.trim();
+  var p = document.getElementById('rP').value;
+  if(!e || !p) return setAA('Preencha todos os campos');
+  if(p.length < 8) return setAA('Senha muito curta (min. 8)');
+  try {
+    await api('POST', '/auth/register', {email:e, password:p});
+    document.getElementById('aAlert').innerHTML = '';
+    document.querySelectorAll('.tp').forEach(function(t){ t.classList.remove('on'); });
+    document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); });
+
+    var vp = document.getElementById('pVerify');
+    if(!vp) {
       vp = document.createElement('div');
       vp.id = 'pVerify';
       vp.className = 'tp on';
 
-      const info = document.createElement('div');
+      var info = document.createElement('div');
       info.style.cssText = 'font-family:var(--font-mono);font-size:11px;color:var(--text-dim);margin-bottom:14px;line-height:1.7';
-      info.innerHTML = 'Código enviado para <b style="color:var(--accent)">' + e + '</b>.<br>Verifique sua caixa de entrada.';
+      info.innerHTML = 'Codigo enviado para <b style="color:var(--accent)">' + e + '</b>.<br>Verifique sua caixa de entrada.';
 
-      const fg = document.createElement('div');
+      var fg = document.createElement('div');
       fg.className = 'fg';
-      fg.innerHTML = '<label>Código de 6 dígitos</label>';
 
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.id = 'vCode';
-      input.maxLength = 6;
-      input.placeholder = '000000';
-      input.style.cssText = 'letter-spacing:6px;font-size:18px;text-align:center';
-      input.oninput = function(){ this.value = this.value.replace(/\D/g,''); };
-      input.onkeydown = function(ev){ if(ev.key==='Enter') doVerify(); };
+      var lbl = document.createElement('label');
+      lbl.textContent = 'Codigo de 6 digitos';
+      fg.appendChild(lbl);
 
-      fg.appendChild(input);
+      var inp = document.createElement('input');
+      inp.type = 'text';
+      inp.id = 'vCode';
+      inp.maxLength = 6;
+      inp.placeholder = '000000';
+      inp.style.cssText = 'letter-spacing:6px;font-size:18px;text-align:center';
+      inp.oninput = function(){ this.value = this.value.replace(/\D/g,''); };
+      inp.onkeydown = function(ev){ if(ev.key==='Enter') doVerify(); };
+      fg.appendChild(inp);
 
-      const mf = document.createElement('div');
+      var mf = document.createElement('div');
       mf.className = 'mf';
-      mf.innerHTML = '<button class="btn btn-o" onclick="swTab(\'register\')">Voltar</button><button class="btn btn-g" onclick="doVerify()">VERIFICAR</button>';
+
+      var btnV = document.createElement('button');
+      btnV.className = 'btn btn-o';
+      btnV.textContent = 'Voltar';
+      btnV.onclick = function(){ swTab('register'); };
+
+      var btnC = document.createElement('button');
+      btnC.className = 'btn btn-g';
+      btnC.textContent = 'VERIFICAR';
+      btnC.onclick = doVerify;
+
+      mf.appendChild(btnV);
+      mf.appendChild(btnC);
 
       vp.appendChild(info);
       vp.appendChild(fg);
@@ -561,40 +596,41 @@ async function doReg(){
       vp.classList.add('on');
       document.getElementById('vCode').value = '';
     }
-
     window._pendingEmail = e;
-  } catch(err) {
-    setAA(err.message);
-  }
+  } catch(err) { setAA(err.message); }
 }
-async function doVerify(){
-  const e = window._pendingEmail;
-  const code = document.getElementById('vCode').value.trim();
 
-  if(!code || code.length < 6) return setAA('Digite o código completo');
-
+async function doVerify() {
+  var e = window._pendingEmail;
+  var code = document.getElementById('vCode').value.trim();
+  if(!code || code.length < 6) return setAA('Digite o codigo completo');
   try {
-    const d = await api('POST', '/auth/verify-otp', { email: e, token: code });
+    var d = await api('POST', '/auth/verify-otp', {email:e, token:code});
     token = d.access_token;
     user = d.user;
-    localStorage.setItem('mc_s', JSON.stringify({ t: token, u: user }));
+    localStorage.setItem('mc_s', JSON.stringify({t:token, u:user}));
     window._pendingEmail = null;
     closeAuth();
     updH();
     load();
-    showToast('✓ Conta verificada! Bem-vindo, ' + e.split('@')[0] + '!');
-  } catch(err) {
-    setAA(err.message);
-  }
+    showToast('Conta verificada! Bem-vindo, ' + e.split('@')[0] + '!');
+  } catch(err) { setAA(err.message); }
 }
-function doLogout(){user=null;token=null;localStorage.removeItem('mc_s');updH();load();showToast('Logout realizado');}
 
-function updH(){
-  const div = document.getElementById('hauth');
-  if(user){
-    let html = '<div style="display:flex;align-items:center;gap:7px">';
-    if(user.is_admin) html += '<button class="btn btn-o btn-sm" onclick="openAdm()">⚔ ADMIN</button>';
-    html += '<button class="btn btn-g btn-sm" onclick="openUp()">↑ UPLOAD</button>';
+function doLogout() {
+  user=null; token=null;
+  localStorage.removeItem('mc_s');
+  updH();
+  load();
+  showToast('Logout realizado');
+}
+
+function updH() {
+  var div = document.getElementById('hauth');
+  if(user) {
+    var html = '<div style="display:flex;align-items:center;gap:7px">';
+    if(user.is_admin) html += '<button class="btn btn-o btn-sm" onclick="openAdm()">ADMIN</button>';
+    html += '<button class="btn btn-g btn-sm" onclick="openUp()">UPLOAD</button>';
     html += '<div class="uc" onclick="doLogout()" title="Sair">';
     html += '<div class="uav">' + user.email[0].toUpperCase() + '</div>';
     html += '<span class="uem">' + user.email.split('@')[0] + '</span>';
@@ -606,123 +642,189 @@ function updH(){
   }
 }
 
-function openUp(){if(!user){openAuth();return;}document.getElementById('upOv').classList.add('open');}
-function closeUp(){document.getElementById('upOv').classList.remove('open');uFile=null;document.getElementById('fn').textContent='';document.getElementById('upAlert').innerHTML='';}
-document.getElementById('upOv').addEventListener('click',e=>{if(e.target===e.currentTarget)closeUp();});
-function hFile(i){const f=i.files[0];if(f){uFile=f;document.getElementById('fn').textContent='📎 '+f.name;}}
+function openUp() { if(!user){ openAuth(); return; } document.getElementById('upOv').classList.add('open'); }
+function closeUp() {
+  document.getElementById('upOv').classList.remove('open');
+  uFile=null;
+  document.getElementById('fn').textContent='';
+  document.getElementById('upAlert').innerHTML='';
+}
+document.getElementById('upOv').addEventListener('click', function(e){ if(e.target===e.currentTarget) closeUp(); });
 
-// Drop — remova a validação de extensão
-function hDrop(e){
+function hFile(i) {
+  var f = i.files[0];
+  if(f){ uFile=f; document.getElementById('fn').textContent='📎 '+f.name; }
+}
+
+function hDrop(e) {
   e.preventDefault();
   document.getElementById('dz').classList.remove('drag');
-  const f = e.dataTransfer.files[0];
-  if(f){
-    uFile = f;
-    document.getElementById('fn').textContent = '📎 ' + f.name;
-  } else {
-    showToast('⚠ Nenhum arquivo detectado!', true);
-  }
+  var f = e.dataTransfer.files[0];
+  if(f){ uFile=f; document.getElementById('fn').textContent='📎 '+f.name; }
+  else showToast('Nenhum arquivo detectado!', true);
 }
 
-async function submit(){
-  const n=document.getElementById('uN').value.trim(),a=document.getElementById('uA').value.trim(),c=document.getElementById('uC').value,t=document.getElementById('uT').value,s=document.getElementById('uS').value,d=document.getElementById('uD').value.trim();
-  if(!n||!a)return setUA('Preencha nome e nick');
-  if(!uFile)return setUA('Selecione um .json/.txt');
-  const btn=document.getElementById('subBtn');btn.textContent='ENVIANDO...';btn.disabled=true;
-  try{
-    const form=new FormData();form.append('name',n);form.append('author',a);form.append('client',c);form.append('type',t);form.append('server',s);form.append('desc',d);form.append('file',uFile);
-    await api('POST','/configs',form,true);closeUp();load();showToast('✓ Config publicada!');
-    ['uN','uA','uD'].forEach(id=>document.getElementById(id).value='');
-  }catch(err){setUA(err.message);}
-  finally{btn.textContent='PUBLICAR';btn.disabled=false;}
+async function submit() {
+  var n=document.getElementById('uN').value.trim();
+  var a=document.getElementById('uA').value.trim();
+  var c=document.getElementById('uC').value;
+  var t=document.getElementById('uT').value;
+  var s=document.getElementById('uS').value;
+  var d=document.getElementById('uD').value.trim();
+  if(!n||!a) return setUA('Preencha nome e nick');
+  if(!uFile) return setUA('Selecione um arquivo');
+  var btn=document.getElementById('subBtn');
+  btn.textContent='ENVIANDO...';
+  btn.disabled=true;
+  try {
+    var form=new FormData();
+    form.append('name',n); form.append('author',a); form.append('client',c);
+    form.append('type',t); form.append('server',s); form.append('desc',d);
+    form.append('file',uFile);
+    await api('POST','/configs',form,true);
+    closeUp(); load(); showToast('Config publicada!');
+    ['uN','uA','uD'].forEach(function(id){ document.getElementById(id).value=''; });
+  } catch(err) { setUA(err.message); }
+  finally { btn.textContent='PUBLICAR'; btn.disabled=false; }
 }
 
-async function delCfg(id){
+async function delCfg(id) {
   if(!confirm('Deletar config #'+id+'?')) return;
-  try{
+  try {
     await api('DELETE', '/configs/'+id);
-    showToast('✓ Deletado!');
+    showToast('Deletado!');
     load();
-  } catch(e){
-    showToast('⚠ '+e.message, true);
-  }
+  } catch(e) { showToast('Erro: '+e.message, true); }
 }
-async function openAdm(){
+
+async function openAdm() {
   document.getElementById('admOv').classList.add('open');
-  try{
-    const[stats,cfgs]=await Promise.all([api('GET','/admin/stats'),api('GET','/configs')]);
-    document.getElementById('aT').textContent=stats.total_configs;
-    document.getElementById('aL').textContent=stats.by_type?.legit||0;
-    document.getElementById('aB').textContent=stats.by_type?.blatant||0;
-    document.getElementById('admList').innerHTML = (cfgs.configs||[]).slice(0,8).map(c =>
-  '<div class="ar"><div class="ar-info"><div class="ar-name">' + esc(c.name) + '.json</div>' +
-  '<div class="ar-by">by ' + esc(c.author) + ' · ' + c.type + '</div></div>' +
-  '<button class="btn btn-r btn-sm" onclick="aDel(' + c.id + ')">DELETAR</button></div>'
-).join('');
-  }catch(e){showToast('Erro: '+e.message,true);}
-}
-function closeAdm(){document.getElementById('admOv').classList.remove('open');}
-document.getElementById('admOv').addEventListener('click',e=>{if(e.target===e.currentTarget)closeAdm();});
-async function aDel(id){if(!confirm('Deletar #'+id+'?'))return;try{await api('DELETE',`/admin/configs/${id}`);showToast('✓ Deletado!');openAdm();load();}catch(e){showToast('⚠ '+e.message,true);}}
-
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function showToast(msg,err){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(err?' err':'');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3200);}
-function setAA(msg,ok){document.getElementById('aAlert').innerHTML=`<div class="ab ${ok?'ab-ok':'ab-err'}">${esc(msg)}</div>`;}
-function setUA(msg){document.getElementById('upAlert').innerHTML=`<div class="ab ab-err">${esc(msg)}</div>`;}
-
-function openProfile(){if(!user){openAuth();return;}document.getElementById('profOv').classList.add('open');loadProfile();}
-function closeProfile(){document.getElementById('profOv').classList.remove('open');}
-document.getElementById('profOv').addEventListener('click',e=>{if(e.target===e.currentTarget)closeProfile();});
-async function loadProfile(){
-  try{
-    const d=await api('GET','/me/configs');
-    const list=d.configs||[];
-    document.getElementById('profList').innerHTML=list.length?list.map(c=>`<div class="ar"><div class="ar-info"><div class="ar-name">${esc(c.name||'sem-nome')}</div><div class="ar-by">${esc(c.client||'client')} · ${esc(c.type||'tipo')} · ${esc((c.created_at||'').split('T')[0])}</div></div><a class="btn btn-g btn-sm" href="${esc(c.file_url)}" target="_blank">ABRIR</a></div>`).join(''):'<div class="empty"><p>Você ainda não publicou configs.</p></div>';
-  }catch(e){showToast('Erro perfil: '+e.message,true);}
+  try {
+    var results = await Promise.all([api('GET','/admin/stats'), api('GET','/configs')]);
+    var stats = results[0];
+    var cfgs = results[1];
+    document.getElementById('aT').textContent = stats.total_configs;
+    document.getElementById('aL').textContent = (stats.by_type && stats.by_type.legit) ? stats.by_type.legit : 0;
+    document.getElementById('aB').textContent = (stats.by_type && stats.by_type.blatant) ? stats.by_type.blatant : 0;
+    var items = (cfgs.configs || []).slice(0,8);
+    var html = '';
+    for(var i=0; i<items.length; i++) {
+      var c = items[i];
+      html += '<div class="ar">';
+      html += '<div class="ar-info"><div class="ar-name">' + esc(c.name) + '</div>';
+      html += '<div class="ar-by">by ' + esc(c.author) + ' · ' + c.type + '</div></div>';
+      html += '<button class="btn btn-r btn-sm" onclick="aDel(' + c.id + ')">DELETAR</button>';
+      html += '</div>';
+    }
+    document.getElementById('admList').innerHTML = html;
+  } catch(e) { showToast('Erro: '+e.message, true); }
 }
 
-function openDL(){document.getElementById('dlOv').classList.add('open');renderDL();}
-function closeDL(){document.getElementById('dlOv').classList.remove('open');}
-document.getElementById('dlOv').addEventListener('click',e=>{if(e.target===e.currentTarget)closeDL();});
-function renderDL(){
-  const tabs = {
+function closeAdm() { document.getElementById('admOv').classList.remove('open'); }
+document.getElementById('admOv').addEventListener('click', function(e){ if(e.target===e.currentTarget) closeAdm(); });
+
+async function aDel(id) {
+  if(!confirm('Deletar #'+id+'?')) return;
+  try {
+    await api('DELETE', '/admin/configs/'+id);
+    showToast('Deletado!');
+    openAdm();
+    load();
+  } catch(e) { showToast('Erro: '+e.message, true); }
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, err) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (err ? ' err' : '');
+  clearTimeout(t._t);
+  t._t = setTimeout(function(){ t.classList.remove('show'); }, 3200);
+}
+
+function setAA(msg, ok) {
+  document.getElementById('aAlert').innerHTML = '<div class="ab ' + (ok?'ab-ok':'ab-err') + '">' + esc(msg) + '</div>';
+}
+function setUA(msg) {
+  document.getElementById('upAlert').innerHTML = '<div class="ab ab-err">' + esc(msg) + '</div>';
+}
+
+function openProfile() { if(!user){ openAuth(); return; } document.getElementById('profOv').classList.add('open'); loadProfile(); }
+function closeProfile() { document.getElementById('profOv').classList.remove('open'); }
+document.getElementById('profOv').addEventListener('click', function(e){ if(e.target===e.currentTarget) closeProfile(); });
+
+async function loadProfile() {
+  try {
+    var d = await api('GET', '/me/configs');
+    var list = d.configs || [];
+    if(!list.length) {
+      document.getElementById('profList').innerHTML = '<div class="empty"><p>Voce ainda nao publicou configs.</p></div>';
+      return;
+    }
+    var html = '';
+    for(var i=0; i<list.length; i++) {
+      var c = list[i];
+      html += '<div class="ar">';
+      html += '<div class="ar-info"><div class="ar-name">' + esc(c.name||'sem-nome') + '</div>';
+      html += '<div class="ar-by">' + esc(c.client||'client') + ' · ' + esc(c.type||'tipo') + ' · ' + esc((c.created_at||'').split('T')[0]) + '</div></div>';
+      html += '<a class="btn btn-g btn-sm" href="' + esc(c.file_url) + '" target="_blank">ABRIR</a>';
+      html += '</div>';
+    }
+    document.getElementById('profList').innerHTML = html;
+  } catch(e) { showToast('Erro perfil: '+e.message, true); }
+}
+
+function openDL() { document.getElementById('dlOv').classList.add('open'); renderDL(); }
+function closeDL() { document.getElementById('dlOv').classList.remove('open'); }
+document.getElementById('dlOv').addEventListener('click', function(e){ if(e.target===e.currentTarget) closeDL(); });
+
+function renderDL() {
+  var tabs = {
     legit: [
-      ['Slinky(1.8.9)','https://www.mediafire.com/file/1o209cxbzkpz58i/slinkyload.zip/file'],
-      ['DoomsDay (1.8x to 1.21.x)','https://doomsdayclient.com/'],
-      ['Velarion(1.8.9)','https://github.com/4everdies/VelarioNsrc/releases/download/shitautohotkey/Velarion.exe'],
-      ['IHateHg (Auto Soup/Recraft 1.8.9)','https://github.com/maththekid/ihatehg/releases/tag/1.6'],
+      ['Slinky (1.8.9)', 'https://www.mediafire.com/file/1o209cxbzkpz58i/slinkyload.zip/file'],
+      ['DoomsDay (1.8x-1.21x)', 'https://doomsdayclient.com/'],
+      ['Velarion (1.8.9)', 'https://github.com/4everdies/VelarioNsrc/releases/download/shitautohotkey/Velarion.exe'],
+      ['IHateHg - Auto Soup/Recraft (1.8.9)', 'https://github.com/maththekid/ihatehg/releases/tag/1.6']
     ],
     hvh: [
-      ['CatLean (1.21.10/11)','https://catlean.su'],
-      ['Mio Client (1.21.1/5)','https://hackvshack.net/threads/mio-v2-1-7-v2-2-1-crack-by-twonick-0x22.6516/'],
-      ['Exhibition (1.8.9)','https://b.catgirlsare.sexy/LT96_iZYcA61.rar'],
+      ['CatLean (1.21.x)', 'https://catlean.su'],
+      ['Mio Client (1.21.x)', 'https://hackvshack.net/threads/mio-v2-1-7-v2-2-1-crack-by-twonick-0x22.6516/'],
+      ['Exhibition (1.8.9)', 'https://b.catgirlsare.sexy/LT96_iZYcA61.rar']
     ],
     blatant: [
-      ['Augustus (CrackCrew 1.8.9)','https://www.mediafire.com/file/n43lmn7p7c8as4b/Augustus.zip/file'],
-      ['Myau (1.8.9)','https://www.mediafire.com/file/h7usx9o2s98wd4z/MYAU.jar/file'],
-      ['Myau+ (1.8.9)','https://github.com/IamNespola/OpenMyau-Plus/releases'],
-      ['Astolfo (1.8.9)','https://www.mediafire.com/file/18xq7e4wij0ox4j/Astolfo-LATEST.zip/file'],
-      ['Avocado (1.8.9)','https://www.mediafire.com/file/qc76zztrq689c6m/avocado-b1.5.jar/file'],
-      ['VestigeR (1.8.9)','https://www.mediafire.com/file/ieny7lgmzc7hglq/VestigeR+1.1.0-1.zip/file'],
-      ['LiquidBounce NewGen (1.7 to 1.21.x','https://github.com/CCBlueX/LiquidLauncher/releases/download/v0.5.0/LiquidLauncher_0.5.0_x64_en-US.msi'],
+      ['Augustus CrackCrew (1.8.9)', 'https://www.mediafire.com/file/n43lmn7p7c8as4b/Augustus.zip/file'],
+      ['Myau (1.8.9)', 'https://www.mediafire.com/file/h7usx9o2s98wd4z/MYAU.jar/file'],
+      ['Myau+ (1.8.9)', 'https://github.com/IamNespola/OpenMyau-Plus/releases'],
+      ['Astolfo (1.8.9)', 'https://www.mediafire.com/file/18xq7e4wij0ox4j/Astolfo-LATEST.zip/file'],
+      ['Avocado (1.8.9)', 'https://www.mediafire.com/file/qc76zztrq689c6m/avocado-b1.5.jar/file'],
+      ['VestigeR (1.8.9)', 'https://www.mediafire.com/file/ieny7lgmzc7hglq/VestigeR+1.1.0-1.zip/file'],
+      ['LiquidBounce NewGen (1.7-1.21.x)', 'https://github.com/CCBlueX/LiquidLauncher/releases/download/v0.5.0/LiquidLauncher_0.5.0_x64_en-US.msi']
     ]
   };
 
-  document.getElementById('dlList').innerHTML = `
-    <div class="tabs" style="margin-bottom:14px">
-      <button class="tab dl-tab on" data-tab="legit" onclick="dlSwitch('legit')">LEGIT</button>
-      <button class="tab dl-tab" data-tab="hvh" onclick="dlSwitch('hvh')">HvH</button>
-      <button class="tab dl-tab" data-tab="blatant" onclick="dlSwitch('blatant')">BLATANT</button>
-    </div>
-    <div class="al" id="dlTabContent"></div>
-  `;
+  var tabsHtml = '<div class="tabs" style="margin-bottom:14px">';
+  tabsHtml += '<button class="tab dl-tab on" data-tab="legit" onclick="dlSwitch(\'legit\')">LEGIT</button>';
+  tabsHtml += '<button class="tab dl-tab" data-tab="hvh" onclick="dlSwitch(\'hvh\')">HvH</button>';
+  tabsHtml += '<button class="tab dl-tab" data-tab="blatant" onclick="dlSwitch(\'blatant\')">BLATANT</button>';
+  tabsHtml += '</div><div class="al" id="dlTabContent"></div>';
+  document.getElementById('dlList').innerHTML = tabsHtml;
 
   window._dlTabs = tabs;
-  window.dlSwitch = function(tab){
-    document.querySelectorAll('.dl-tab').forEach(t=>t.classList.toggle('on', t.dataset.tab===tab));
-    document.getElementById('dlTabContent').innerHTML = tabs[tab]
-      .map(([n,u])=>`<div class="ar"><div class="ar-info"><div class="ar-name">${esc(n)}</div><div class="ar-by">Download</div></div><a class="btn btn-g btn-sm" href="${esc(u)}" target="_blank">DOWNLOAD</a></div>`)
-      .join('');
+  window.dlSwitch = function(tab) {
+    document.querySelectorAll('.dl-tab').forEach(function(t){ t.classList.toggle('on', t.dataset.tab===tab); });
+    var items = tabs[tab];
+    var html = '';
+    for(var i=0; i<items.length; i++) {
+      html += '<div class="ar">';
+      html += '<div class="ar-info"><div class="ar-name">' + esc(items[i][0]) + '</div>';
+      html += '<div class="ar-by">Download</div></div>';
+      html += '<a class="btn btn-g btn-sm" href="' + esc(items[i][1]) + '" target="_blank">DOWNLOAD</a>';
+      html += '</div>';
+    }
+    document.getElementById('dlTabContent').innerHTML = html;
   };
 
   dlSwitch('legit');
