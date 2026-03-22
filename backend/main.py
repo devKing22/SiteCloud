@@ -227,11 +227,11 @@ async def create_config(
 
     # Valida client
 # Valida client
-allowed_clients = {
+    allowed_clients = {
     "augustus", "astolfo", "slinky", "myau", "myau+",
     "avocado", "vestigereborn", "liquidbounce", "velarion",
     "catlean", "mio", "doomsday", "exhibition", "ihatehg"
-}
+    }
     if sanitize_text(client, 50).lower() not in allowed_clients:
         raise HTTPException(status_code=400, detail="Client inválido")
 
