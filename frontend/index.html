@@ -347,7 +347,7 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
         <div class="dz-ico">📁</div><p><b>Clique ou arraste</b> o .json</p>
       </div>
       <div class="fn" id="fn"></div>
-      <input type="file" id="fileInput" accept=".json,.txt" onchange="hFile(this)">
+      <input type="file" id="fileInput" onchange="hFile(this)">
     </div>
     <div class="mf"><button class="btn btn-o" onclick="closeUp()">Cancelar</button><button class="btn btn-g" id="subBtn" onclick="submit()">PUBLICAR</button></div>
   </div>
@@ -583,8 +583,6 @@ function openUp(){if(!user){openAuth();return;}document.getElementById('upOv').c
 function closeUp(){document.getElementById('upOv').classList.remove('open');uFile=null;document.getElementById('fn').textContent='';document.getElementById('upAlert').innerHTML='';}
 document.getElementById('upOv').addEventListener('click',e=>{if(e.target===e.currentTarget)closeUp();});
 function hFile(i){const f=i.files[0];if(f){uFile=f;document.getElementById('fn').textContent='📎 '+f.name;}}
-// Input — remova o accept restrito
-<input type="file" id="fileInput" onchange="hFile(this)">
 
 // Drop — remova a validação de extensão
 function hDrop(e){
