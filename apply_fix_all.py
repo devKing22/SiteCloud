@@ -1,4 +1,174 @@
-<!doctype html>
+from pathlib import Path
+from datetime import datetime
+
+ROOT = Path(".")
+BACKEND = ROOT / "backend" / "main.py"
+FRONT = ROOT / "frontend" / "index.html"
+MIG = ROOT / "backend" / "migrations" / f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_config_heaven.sql"
+
+def write(path: Path, content: str):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+
+def patch_sql():
+    sql = """
+-- ===========================
+-- Config Heaven migration
+-- ===========================
+
+-- configs extras
+alter table if exists configs
+  add column if not exists client text,
+  add column if not exists server text,
+  add column if not exists views bigint default 0;
+
+-- profile username fields (na tabela de usuários da app)
+create table if not exists profiles (
+  user_id text primary key,
+  username text unique,
+  username_changed_at timestamptz default now()
+);
+
+-- reviews por config (1..5)
+create table if not exists config_reviews (
+  id bigserial primary key,
+  config_id bigint not null,
+  user_id text not null,
+  stars int not null check (stars >= 1 and stars <= 5),
+  created_at timestamptz default now(),
+  unique(config_id, user_id)
+);
+
+-- comments por config
+create table if not exists config_comments (
+  id bigserial primary key,
+  config_id bigint not null,
+  user_id text not null,
+  author text not null,
+  comment text not null,
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_config_reviews_config_id on config_reviews(config_id);
+create index if not exists idx_config_comments_config_id on config_comments(config_id);
+"""
+    write(MIG, sql.strip() + "\n")
+
+def patch_backend():
+    text = BACKEND.read_text(encoding="utf-8")
+
+    # Nome do site/API
+    text = text.replace('FastAPI(title="OpenConfigs API", version="1.0.0")',
+                        'FastAPI(title="Config Heaven API", version="2.0.0")')
+
+    # allowed types
+    text = text.replace(
+        'allowed_types = {"legit", "blatant", "ghost"}',
+        'allowed_types = {"legit", "blatant", "ghost"}'
+    )
+
+    # allowed clients completo
+    text = text.replace(
+        'allowed_clients = {"augustus", "astolfo", "slinky", "myau", "myau+", "avocado", "vestigereborn"}',
+        'allowed_clients = {"augustus", "astolfo", "slinky", "myau", "myau+", "avocado", "vestigereborn", "doomsday", "haru", "elixe", "liquidbounce", "sigma5", "sigma4.11", "ravenb-", "biggie", "exhibition"}'
+    )
+
+    # Inserir endpoints extras se não existirem
+    if '@app.post("/configs/{config_id}/view")' not in text:
+        text += """
+
+@app.post("/configs/{config_id}/view")
+async def add_view(config_id: int):
+    row = supabase_admin.table("configs").select("id,views").eq("id", config_id).execute()
+    if not row.data:
+        raise HTTPException(status_code=404, detail="Config não encontrada")
+    current = row.data[0].get("views") or 0
+    supabase_admin.table("configs").update({"views": current + 1}).eq("id", config_id).execute()
+    return {"views": current + 1}
+
+@app.get("/configs/{config_id}/reviews")
+async def get_reviews(config_id: int):
+    rv = supabase_admin.table("config_reviews").select("*").eq("config_id", config_id).execute()
+    cm = supabase_admin.table("config_comments").select("*").eq("config_id", config_id).order("created_at", desc=True).execute()
+    stars = [r["stars"] for r in rv.data] if rv.data else []
+    avg = (sum(stars) / len(stars)) if stars else 0
+    return {"avg": avg, "count": len(stars), "comments": cm.data or []}
+
+@app.post("/configs/{config_id}/reviews")
+async def upsert_review(
+    config_id: int,
+    request: Request,
+    user=Depends(get_supabase_user)
+):
+    body = await request.json()
+    stars = int(body.get("stars", 0))
+    comment = sanitize_text(body.get("comment", ""), 500)
+
+    if stars < 1 or stars > 5:
+        raise HTTPException(status_code=400, detail="Stars deve ser entre 1 e 5")
+
+    payload = {"config_id": config_id, "user_id": str(user.id), "stars": stars}
+    supabase_admin.table("config_reviews").upsert(payload, on_conflict="config_id,user_id").execute()
+
+    if comment:
+        supabase_admin.table("config_comments").insert({
+            "config_id": config_id,
+            "user_id": str(user.id),
+            "author": user.email.split("@")[0] if user.email else "user",
+            "comment": comment
+        }).execute()
+
+    return {"message": "Review salva"}
+
+@app.get("/me/profile")
+async def my_profile(user=Depends(get_supabase_user)):
+    row = supabase_admin.table("profiles").select("*").eq("user_id", str(user.id)).execute()
+    if row.data:
+        return row.data[0]
+    default_username = (user.email.split("@")[0] if user.email else f"user_{str(user.id)[:6]}")
+    ins = supabase_admin.table("profiles").insert({
+        "user_id": str(user.id),
+        "username": default_username
+    }).execute()
+    return ins.data[0]
+
+@app.post("/me/profile/username")
+async def change_username(request: Request, user=Depends(get_supabase_user)):
+    body = await request.json()
+    new_username = sanitize_text(body.get("username", ""), 30)
+    if not new_username:
+        raise HTTPException(status_code=400, detail="Username inválido")
+
+    row = supabase_admin.table("profiles").select("*").eq("user_id", str(user.id)).execute()
+    if not row.data:
+        profile = supabase_admin.table("profiles").insert({
+            "user_id": str(user.id),
+            "username": new_username
+        }).execute().data[0]
+        return profile
+
+    profile = row.data[0]
+    last_changed = profile.get("username_changed_at")
+    if last_changed:
+        from datetime import datetime, timezone
+        dt = datetime.fromisoformat(last_changed.replace("Z", "+00:00"))
+        now = datetime.now(timezone.utc)
+        delta_days = (now - dt).days
+        if delta_days < 7:
+            raise HTTPException(status_code=400, detail=f"Você só pode mudar o username após 7 dias. Faltam {7-delta_days} dia(s).")
+
+    up = supabase_admin.table("profiles").update({
+        "username": new_username,
+        "username_changed_at": datetime.utcnow().isoformat()
+    }).eq("user_id", str(user.id)).execute()
+    return up.data[0]
+"""
+
+    write(BACKEND, text)
+
+def patch_frontend():
+    # React CDN single-file frontend
+    html = """<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -175,3 +345,15 @@
   </script>
 </body>
 </html>
+"""
+    write(FRONT, html)
+
+def main():
+    patch_sql()
+    patch_backend()
+    patch_frontend()
+    print("✅ apply_fix_all concluído.")
+    print(f"SQL migration criada em: {MIG}")
+
+if __name__ == "__main__":
+    main()
