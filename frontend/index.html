@@ -261,6 +261,8 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
   <option value="catlean">CatLean(1.21.x)</option>
   <option value="mio">Mio Client(1.21.x)</option>
   <option value="doomsday">DoomsDay(1.8x-1.21x)</option>
+  <option value="exhibition">Exhibition(HvH)</option>
+  <option value="ihatehg">IHateHg(Legit)</option>
 </select>
   </div>
   <div class="fg" style="max-width:460px;margin:8px auto 0">
@@ -328,6 +330,8 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
   <option value="catlean">CatLean</option>
   <option value="mio">Mio Client</option>
   <option value="doomsday">DoomsDay</option>
+  <option value="exhibition">Exhibition(HvH)</option>
+  <option value="ihatehg">IHateHg(Legit)</option>
       </select>
     </div>
     <div class="fg"><label>Tipo</label>
@@ -626,21 +630,47 @@ function openDL(){document.getElementById('dlOv').classList.add('open');renderDL
 function closeDL(){document.getElementById('dlOv').classList.remove('open');}
 document.getElementById('dlOv').addEventListener('click',e=>{if(e.target===e.currentTarget)closeDL();});
 function renderDL(){
-  const links=[
-    ['Slinky','https://www.mediafire.com/file/1o209cxbzkpz58i/slinkyload.zip/file'],
-    ['Myau','https://www.mediafire.com/file/h7usx9o2s98wd4z/MYAU.jar/file'],
-    ['Astolfo','https://www.mediafire.com/file/18xq7e4wij0ox4j/Astolfo-LATEST.zip/file'],
-    ['Augustus (CrackCrew{cc})','https://www.mediafire.com/file/n43lmn7p7c8as4b/Augustus.zip/file'],
-    ['Myau+','https://github.com/IamNespola/OpenMyau-Plus/releases'],
-    ['Avocado','https://www.mediafire.com/file/qc76zztrq689c6m/avocado-b1.5.jar/file'],
-    ['VestigeR','https://www.mediafire.com/file/ieny7lgmzc7hglq/VestigeR+1.1.0-1.zip/file'],
-    ['Velarion(Legit)','https://github.com/4everdies/VelarioNsrc/releases/download/shitautohotkey/Velarion.exe'],
-    ['LiquidBounce Newgen(launcher.msi)','https://github.com/CCBlueX/LiquidLauncher/releases/download/v0.5.0/LiquidLauncher_0.5.0_x64_en-US.msi'],
-    ['CatLean (1.21.x)','https://catlean.su'],
-    ['Mio Client (1.21.x)','https://hackvshack.net/threads/mio-v2-1-7-v2-2-1-crack-by-twonick-0x22.6516/'],
-    ['DoomsDay (1.8x to 1.21.x)','https://doomsdayclient.com/']
-  ];
-  document.getElementById('dlList').innerHTML=links.map(([n,u])=>`<div class="ar"><div class="ar-info"><div class="ar-name">${esc(n)}</div><div class="ar-by">Download</div></div><a class="btn btn-g btn-sm" href="${esc(u)}" target="_blank">DOWNLOAD</a></div>`).join('');
+  const tabs = {
+    legit: [
+      ['Slinky','https://www.mediafire.com/file/1o209cxbzkpz58i/slinkyload.zip/file'],
+      ['DoomsDay (1.8x to 1.21.x)','https://doomsdayclient.com/'],
+      ['Velarion(Legit)','https://github.com/4everdies/VelarioNsrc/releases/download/shitautohotkey/Velarion.exe'],
+      ['IHateHg (Auto Soup/Recraft)','https://github.com/maththekid/ihatehg/releases/tag/1.6'],
+    ],
+    hvh: [
+      ['CatLean (1.21.x)','https://catlean.su'],
+      ['Mio Client (1.21.x)','https://hackvshack.net/threads/mio-v2-1-7-v2-2-1-crack-by-twonick-0x22.6516/'],
+      ['Exhibition','https://b.catgirlsare.sexy/LT96_iZYcA61.rar'],
+    ],
+    blatant: [
+      ['Augustus (CrackCrew{cc})','https://www.mediafire.com/file/n43lmn7p7c8as4b/Augustus.zip/file'],
+      ['Myau','https://www.mediafire.com/file/h7usx9o2s98wd4z/MYAU.jar/file'],
+      ['Myau+','https://github.com/IamNespola/OpenMyau-Plus/releases'],
+      ['Astolfo','https://www.mediafire.com/file/18xq7e4wij0ox4j/Astolfo-LATEST.zip/file'],
+      ['Avocado','https://www.mediafire.com/file/qc76zztrq689c6m/avocado-b1.5.jar/file'],
+      ['VestigeR','https://www.mediafire.com/file/ieny7lgmzc7hglq/VestigeR+1.1.0-1.zip/file'],
+      ['LiquidBounce NewGen','https://github.com/CCBlueX/LiquidLauncher/releases/download/v0.5.0/LiquidLauncher_0.5.0_x64_en-US.msi'],
+    ]
+  };
+
+  document.getElementById('dlList').innerHTML = `
+    <div class="tabs" style="margin-bottom:14px">
+      <button class="tab dl-tab on" data-tab="legit" onclick="dlSwitch('legit')">LEGIT</button>
+      <button class="tab dl-tab" data-tab="hvh" onclick="dlSwitch('hvh')">HvH</button>
+      <button class="tab dl-tab" data-tab="blatant" onclick="dlSwitch('blatant')">BLATANT</button>
+    </div>
+    <div class="al" id="dlTabContent"></div>
+  `;
+
+  window._dlTabs = tabs;
+  window.dlSwitch = function(tab){
+    document.querySelectorAll('.dl-tab').forEach(t=>t.classList.toggle('on', t.dataset.tab===tab));
+    document.getElementById('dlTabContent').innerHTML = tabs[tab]
+      .map(([n,u])=>`<div class="ar"><div class="ar-info"><div class="ar-name">${esc(n)}</div><div class="ar-by">Download</div></div><a class="btn btn-g btn-sm" href="${esc(u)}" target="_blank">DOWNLOAD</a></div>`)
+      .join('');
+  };
+
+  dlSwitch('legit');
 }
 </script>
 </body>
