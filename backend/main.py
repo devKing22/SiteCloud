@@ -124,7 +124,7 @@ async def register(request: Request):
 async def login(request: Request):
     """Login com email + senha."""
     body = await request.json()
-    email = sanitize_text(body.get("email", ""), 200)
+    email = body.get("email", "").strip()
     password = body.get("password", "")
 
     try:
