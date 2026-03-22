@@ -106,11 +106,10 @@ async def upload_to_github(filename: str, content: bytes) -> str:
 
 @app.post("/auth/register")
 async def register(request: Request):
-    """Registro com email + senha. Supabase envia email de confirmação."""
     body = await request.json()
-    email = sanitize_text(body.get("email", ""), 200)
+    email = body.get("email", "").strip()  # ✅ sem sanitize_text
     password = body.get("password", "")
-
+    
     if not email or not password or len(password) < 8:
         raise HTTPException(status_code=400, detail="Email ou senha inválidos")
 
