@@ -164,6 +164,7 @@ async def create_config(
     author: str = Form(...),
     type: str = Form(...),
     desc: str = Form(""),
+    server: str = Form("outro"),
     file: UploadFile = File(...),
     user=Depends(get_supabase_user),
 ):
@@ -182,8 +183,8 @@ async def create_config(
         raise HTTPException(status_code=400, detail="Apenas arquivos .json")
 
     content = await file.read()
-    if len(content) > 2 * 1024 * 1024:  # 2MB max
-        raise HTTPException(status_code=400, detail="Arquivo muito grande (max 2MB)")
+    if len(content) > 10 * 1024 * 1024:  # 10MB max
+        raise HTTPException(status_code=400, detail="Arquivo muito grande (max 10MB)")
 
     # Valida JSON
     try:
@@ -204,6 +205,7 @@ async def create_config(
         "type": type,
         "desc": sanitize_text(desc, 500),
         "file_url": file_url,
+        "server": sanitize_text(server, 50),
         "user_id": str(user.id),
     }
     res = supabase.table("configs").insert(data).execute()
