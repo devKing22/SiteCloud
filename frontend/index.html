@@ -586,7 +586,21 @@ function openUp(){if(!user){openAuth();return;}document.getElementById('upOv').c
 function closeUp(){document.getElementById('upOv').classList.remove('open');uFile=null;document.getElementById('fn').textContent='';document.getElementById('upAlert').innerHTML='';}
 document.getElementById('upOv').addEventListener('click',e=>{if(e.target===e.currentTarget)closeUp();});
 function hFile(i){const f=i.files[0];if(f){uFile=f;document.getElementById('fn').textContent='📎 '+f.name;}}
-function hDrop(e){e.preventDefault();document.getElementById('dz').classList.remove('drag');const f=e.dataTransfer.files[0];if(f&&(/\.(json|txt)$/i).test(f.name)){uFile=f;document.getElementById('fn').textContent='📎 '+f.name;}else showToast('⚠ Apenas .json ou .txt!',true);}
+// Input — remova o accept restrito
+<input type="file" id="fileInput" onchange="hFile(this)">
+
+// Drop — remova a validação de extensão
+function hDrop(e){
+  e.preventDefault();
+  document.getElementById('dz').classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if(f){
+    uFile = f;
+    document.getElementById('fn').textContent = '📎 ' + f.name;
+  } else {
+    showToast('⚠ Nenhum arquivo detectado!', true);
+  }
+}
 
 async function submit(){
   const n=document.getElementById('uN').value.trim(),a=document.getElementById('uA').value.trim(),c=document.getElementById('uC').value,t=document.getElementById('uT').value,s=document.getElementById('uS').value,d=document.getElementById('uD').value.trim();
