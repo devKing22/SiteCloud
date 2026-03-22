@@ -11,7 +11,7 @@ from typing import Optional
 import supabase as sb
 from supabase import create_client, Client
 from dotenv import load_dotenv
-
+import uuid
 load_dotenv()
 
 # ── Config ────────────────────────────────────────────────────────────────────
@@ -57,14 +57,18 @@ def require_admin(user=Depends(get_supabase_user)):
         raise HTTPException(status_code=403, detail="Acesso negado")
     return user
 
-def sanitize_text(value: str, max_len: int = 500) -> str:
-    """Remove chars perigosos e limita tamanho."""
-    if not value:
-        return ""
-    # Remove null bytes e controles
-    cleaned = "".join(c for c in value if c.isprintable())
-    return cleaned[:max_len]
+import re
 
+def sanitize_text(value: str, max_len: int = 50) -> str:
+    if not value:
+        return "config"
+
+    value = value.lower()
+    value = re.sub(r'[^\w\s-]', '', value)
+    value = value.strip().replace(" ", "_")
+
+    return value[:max_len] or "config"
+    
 async def upload_to_github(filename: str, content: bytes) -> str:
     """Faz upload do .json para o GitHub e retorna a URL raw."""
     path = f"configs/{filename}"
@@ -216,10 +220,15 @@ async def create_config(
             raise HTTPException(status_code=400, detail="Arquivo JSON inválido")
 
     # Upload GitHub
-    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    safe_name = sanitize_text(name)
+    import uuid
+
+    safe_name = sanitize_text(name)
+    uid = uuid.uuid4().hex[:6]
+
+    filename = f"{safe_name}-{client}-{uid}.json"
     safe_name = sanitize_text(name, 50).replace(" ", "_")
     ext = ".txt" if file.filename.endswith(".txt") else ".json"
-    filename = f"{timestamp}-{safe_name}-by-{sanitize_text(author, 30)}{ext}"
     file_url = await upload_to_github(filename, content)
 
     # Salva no banco via ORM (parameterizado — seguro)
