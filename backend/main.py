@@ -282,8 +282,6 @@ async def create_config(
 
 @app.delete("/configs/{config_id}")
 async def delete_config(config_id: int, user=Depends(get_supabase_user)):
-    """Deleta config — só o dono ou admin."""
-    res = supabase_admin.table("configs").select("*").eq("id", config_id).execute()
     res = supabase_admin.table("configs").select("*").eq("id", config_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Config não encontrada")
@@ -295,7 +293,6 @@ async def delete_config(config_id: int, user=Depends(get_supabase_user)):
     if not is_admin and not is_owner:
         raise HTTPException(status_code=403, detail="Sem permissão")
 
-    supabase_admin.table("configs").delete().eq("id", config_id).execute()
     supabase_admin.table("configs").delete().eq("id", config_id).execute()
     return {"message": "Config deletada"}
 
@@ -318,7 +315,6 @@ async def my_configs(user=Depends(get_supabase_user)):
 @app.delete("/admin/configs/{config_id}")
 async def admin_delete_config(config_id: int, admin=Depends(require_admin)):
     """Admin deleta qualquer config."""
-    supabase_admin.table("configs").delete().eq("id", config_id).execute()
     supabase_admin.table("configs").delete().eq("id", config_id).execute()
     return {"message": "Config deletada pelo admin"}
 
