@@ -144,16 +144,32 @@ async def logout(user=Depends(get_supabase_user)):
 # ── Config Routes ─────────────────────────────────────────────────────────────
 
 @app.get("/configs")
-async def list_configs(search: Optional[str] = None, type: Optional[str] = None):
+async def list_configs(
+    search: Optional[str] = None,
+    type: Optional[str] = None,
+    client: Optional[str] = None,
+    author: Optional[str] = None,
+    name: Optional[str] = None,
+    server: Optional[str] = None,
+):
     """Lista configs públicas. Usa parâmetros — sem concatenação de string."""
-    query = supabase.table("configs").select("*").order("created_at", desc=True)
+    # Usa service role para leitura pública independente de políticas RLS
+    query = supabase_admin.table("configs").select("*").order("created_at", desc=True)
 
     # Filtros via ORM do Supabase (sem SQL cru — seguro contra injection)
     if type and type != "all":
         query = query.eq("type", sanitize_text(type, 50))
+    if client and client != "all":
+        query = query.eq("client", sanitize_text(client, 50))
+    if server and server != "all":
+        query = query.eq("server", sanitize_text(server, 50))
+    if author:
+        query = query.ilike("author", f"%{sanitize_text(author, 80)}%")
+    if name:
+        query = query.ilike("name", f"%{sanitize_text(name, 100)}%")
     if search:
         clean_search = sanitize_text(search, 100)
-        query = query.ilike("name", f"%{clean_search}%")
+        query = query.or_(f"name.ilike.%{clean_search}%,author.ilike.%{clean_search}%,desc.ilike.%{clean_search}%")
 
     res = query.execute()
     return {"configs": res.data}
@@ -162,6 +178,7 @@ async def list_configs(search: Optional[str] = None, type: Optional[str] = None)
 async def create_config(
     name: str = Form(...),
     author: str = Form(...),
+    client: str = Form(...),
     type: str = Form(...),
     desc: str = Form(""),
     server: str = Form("outro"),
@@ -174,43 +191,51 @@ async def create_config(
         raise HTTPException(status_code=403, detail="Confirme seu email primeiro")
 
     # Valida tipo
-    allowed_types = {"legit", "closet", "blatant", "bedwars", "hypixel", "pvp", "outro"}
+    allowed_types = {"legit", "blatant", "ghost"}
     if type not in allowed_types:
         raise HTTPException(status_code=400, detail="Tipo inválido")
 
-    # Valida arquivo
-    if not file.filename.endswith(".json"):
-        raise HTTPException(status_code=400, detail="Apenas arquivos .json")
+    # Valida client
+    allowed_clients = {"augustus", "astolfo", "slinky", "myau", "myau+", "avocado", "vestigereborn"}
+    if sanitize_text(client, 50).lower() not in allowed_clients:
+        raise HTTPException(status_code=400, detail="Client inválido")
+
+    # Valida arquivo (.json/.txt)
+    if not (file.filename.endswith(".json") or file.filename.endswith(".txt")):
+        raise HTTPException(status_code=400, detail="Apenas arquivos .json ou .txt")
 
     content = await file.read()
     if len(content) > 10 * 1024 * 1024:  # 10MB max
         raise HTTPException(status_code=400, detail="Arquivo muito grande (max 10MB)")
 
-    # Valida JSON
-    try:
-        json.loads(content)
-    except Exception:
-        raise HTTPException(status_code=400, detail="Arquivo JSON inválido")
+    # Valida JSON apenas quando for .json
+    if file.filename.endswith(".json"):
+        try:
+            json.loads(content)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Arquivo JSON inválido")
 
     # Upload GitHub
     timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
     safe_name = sanitize_text(name, 50).replace(" ", "_")
-    filename = f"{timestamp}-{safe_name}-by-{sanitize_text(author, 30)}.json"
+    ext = ".txt" if file.filename.endswith(".txt") else ".json"
+    filename = f"{timestamp}-{safe_name}-by-{sanitize_text(author, 30)}{ext}"
     file_url = await upload_to_github(filename, content)
 
     # Salva no banco via ORM (parameterizado — seguro)
     data = {
         "name": sanitize_text(name, 100),
         "author": sanitize_text(author, 80),
+        "client": sanitize_text(client, 50),
         "type": type,
         "desc": sanitize_text(desc, 500),
         "file_url": file_url,
         "server": sanitize_text(server, 50),
         "user_id": str(user.id),
     }
+
     try:
         # Usa service role no backend para evitar bloqueio por RLS
-        # (permissões de negócio já são validadas acima)
         res = supabase_admin.table("configs").insert(data).execute()
         return {"config": res.data[0]}
     except Exception:
@@ -243,6 +268,13 @@ async def list_users(admin=Depends(require_admin)):
     res = supabase_admin.auth.admin.list_users()
     users = [{"id": u.id, "email": u.email, "confirmed": u.email_confirmed_at is not None} for u in res]
     return {"users": users}
+
+
+@app.get("/me/configs")
+async def my_configs(user=Depends(get_supabase_user)):
+    """Lista configs do usuário logado."""
+    res = supabase_admin.table("configs").select("*").eq("user_id", str(user.id)).order("created_at", desc=True).execute()
+    return {"configs": res.data}
 
 @app.delete("/admin/configs/{config_id}")
 async def admin_delete_config(config_id: int, admin=Depends(require_admin)):
