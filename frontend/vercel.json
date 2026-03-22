@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/api/:path*", "destination": "https://sitecloud-production.up.railway.app/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
