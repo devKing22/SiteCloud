@@ -637,7 +637,16 @@ async function submit(){
   finally{btn.textContent='PUBLICAR';btn.disabled=false;}
 }
 
-async function delCfg(id){if(!confirm('Deletar config #'+id+'?'))return;try{await api('DELETE',`/configs/${id}`);showToast('✓ Deletado!');load();}catch(e){showToast('⚠ '+e.message,true);}}
+async function delCfg(id){
+  if(!confirm('Deletar config #'+id+'?')) return;
+  try{
+    await api('DELETE', '/configs/'+id);
+    showToast('✓ Deletado!');
+    load();
+  } catch(e){
+    showToast('⚠ '+e.message, true);
+  }
+}
 async function openAdm(){
   document.getElementById('admOv').classList.add('open');
   try{
