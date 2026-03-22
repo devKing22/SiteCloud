@@ -276,6 +276,147 @@ async def my_configs(user=Depends(get_supabase_user)):
     res = supabase_admin.table("configs").select("*").eq("user_id", str(user.id)).order("created_at", desc=True).execute()
     return {"configs": res.data}
 
+@app.get("/configs/{config_id}/engagement")
+async def get_config_engagement(config_id: int):
+    """Retorna comentários e avaliações da config."""
+    ensure_config_exists(config_id)
+
+    reviews = (
+        supabase_admin.table("config_reviews")
+        .select("user_id,stars,created_at")
+        .eq("config_id", config_id)
+        .order("created_at", desc=True)
+        .execute()
+    )
+    comments = (
+        supabase_admin.table("config_comments")
+        .select("id,user_id,author,comment,created_at")
+        .eq("config_id", config_id)
+        .order("created_at", desc=True)
+        .execute()
+    )
+
+    comments_data = comments.data or []
+    user_ids = [c.get("user_id") for c in comments_data if c.get("user_id")]
+    profiles_map = {}
+    if user_ids:
+        profiles = (
+            supabase_admin.table("profiles")
+            .select("user_id,username")
+            .in_("user_id", user_ids)
+            .execute()
+        )
+        profiles_map = {p["user_id"]: p.get("username") for p in profiles.data or []}
+
+    normalized_comments = []
+    for comment in comments_data:
+        profile_name = profiles_map.get(comment.get("user_id"))
+        author = profile_name or comment.get("author") or "Anônimo"
+        normalized_comments.append(
+            {
+                "id": comment.get("id"),
+                "user_id": comment.get("user_id"),
+                "author": author,
+                "comment": comment.get("comment"),
+                "created_at": comment.get("created_at"),
+            }
+        )
+
+    review_values = [int(r.get("stars") or 0) for r in (reviews.data or [])]
+    reviews_count = len(review_values)
+    stars_avg = round(sum(review_values) / reviews_count, 2) if reviews_count else 0
+
+    return {
+        "reviews_count": reviews_count,
+        "stars_avg": stars_avg,
+        "comments_count": len(normalized_comments),
+        "comments": normalized_comments,
+    }
+
+@app.post("/configs/{config_id}/comments")
+async def add_config_comment(config_id: int, request: Request, user=Depends(get_supabase_user)):
+    """Cria comentário em uma config."""
+    ensure_config_exists(config_id)
+    body = await request.json()
+    comment_text = sanitize_text(body.get("comment", ""), 1500).strip()
+    if len(comment_text) < 2:
+        raise HTTPException(status_code=400, detail="Comentário muito curto")
+
+    profile = (
+        supabase_admin.table("profiles")
+        .select("username")
+        .eq("user_id", str(user.id))
+        .limit(1)
+        .execute()
+    )
+    profile_name = profile.data[0]["username"] if profile.data else None
+    author = profile_name or user.email.split("@")[0]
+
+    insert_data = {
+        "config_id": config_id,
+        "user_id": str(user.id),
+        "author": sanitize_text(author, 80),
+        "comment": comment_text,
+    }
+    created = supabase_admin.table("config_comments").insert(insert_data).execute()
+    return {"comment": created.data[0]}
+
+@app.post("/configs/{config_id}/reviews")
+async def add_or_update_review(config_id: int, request: Request, user=Depends(get_supabase_user)):
+    """Cria ou atualiza avaliação por estrelas (1 a 5)."""
+    ensure_config_exists(config_id)
+    body = await request.json()
+    stars = int(body.get("stars", 0))
+    if stars < 1 or stars > 5:
+        raise HTTPException(status_code=400, detail="As estrelas devem ser entre 1 e 5")
+
+    existing = (
+        supabase_admin.table("config_reviews")
+        .select("id")
+        .eq("config_id", config_id)
+        .eq("user_id", str(user.id))
+        .limit(1)
+        .execute()
+    )
+
+    if existing.data:
+        updated = (
+            supabase_admin.table("config_reviews")
+            .update({"stars": stars})
+            .eq("id", existing.data[0]["id"])
+            .execute()
+        )
+        return {"review": updated.data[0], "updated": True}
+
+    created = (
+        supabase_admin.table("config_reviews")
+        .insert({"config_id": config_id, "user_id": str(user.id), "stars": stars})
+        .execute()
+    )
+    return {"review": created.data[0], "updated": False}
+
+@app.post("/configs/{config_id}/view")
+async def register_config_view(config_id: int):
+    """Incrementa visualizações quando a coluna views existir."""
+    cfg = (
+        supabase_admin.table("configs")
+        .select("id,views")
+        .eq("id", config_id)
+        .limit(1)
+        .execute()
+    )
+    if not cfg.data:
+        raise HTTPException(status_code=404, detail="Config não encontrada")
+
+    current_views = int(cfg.data[0].get("views") or 0)
+    try:
+        supabase_admin.table("configs").update({"views": current_views + 1}).eq("id", config_id).execute()
+    except Exception:
+        # fallback para casos onde a coluna views ainda não existe
+        pass
+
+    return {"views_count": current_views + 1}
+
 @app.delete("/admin/configs/{config_id}")
 async def admin_delete_config(config_id: int, admin=Depends(require_admin)):
     """Admin deleta qualquer config."""
