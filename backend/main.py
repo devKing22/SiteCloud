@@ -228,39 +228,45 @@ async def create_config(
     # Valida client
 # Valida client
     allowed_clients = {
-    "augustus", "astolfo", "slinky", "myau", "myau+",
-    "avocado", "vestigereborn", "liquidbounce", "velarion",
-    "catlean", "mio", "doomsday", "exhibition", "ihatehg"
+        "augustus", "astolfo", "slinky", "myau", "myau+",
+        "avocado", "vestigereborn", "liquidbounce", "velarion",
+        "catlean", "mio", "doomsday", "exhibition", "ihatehg"
     }
     if sanitize_text(client, 50).lower() not in allowed_clients:
         raise HTTPException(status_code=400, detail="Client inválido")
 
     # Valida arquivo (.json/.txt)
-    if not (file.filename.endswith(".json") or file.filename.endswith(".txt")):
-        raise HTTPException(status_code=400, detail="Apenas arquivos .json ou .txt")
+    # Valida arquivo (.json/.txt ou sem extensão)
+    filename = file.filename or ""
+    has_no_ext = "." not in filename
+    is_valid_ext = filename.endswith(".json") or filename.endswith(".txt")
+
+    if not has_no_ext and not is_valid_ext:
+        raise HTTPException(status_code=400, detail="Apenas arquivos .json, .txt ou sem extensão")
 
     content = await file.read()
-
-    if len(content) > 10 * 1024 * 1024:  # 10MB max
+    if len(content) > 10 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="Arquivo muito grande (max 10MB)")
 
     # Valida JSON apenas quando for .json
-    if file.filename.endswith(".json"):
+    if filename.endswith(".json"):
         try:
             json.loads(content)
         except Exception:
             raise HTTPException(status_code=400, detail="Arquivo JSON inválido")
 
-    # Upload GitHub
-    import uuid
+    # Define extensão pro nome do arquivo no GitHub
+    if filename.endswith(".txt"):
+        ext = ".txt"
+    elif filename.endswith(".json"):
+        ext = ".json"
+    else:
+        ext = ""  # sem extensão, igual ao Slinky original
 
     safe_name = sanitize_text(name)
     uid = uuid.uuid4().hex[:2]
-
-    filename = f"{safe_name}-{client}-{uid}.json"
-    ext = ".txt" if file.filename.endswith(".txt") else ".json"
-    file_url = await upload_to_github(filename, content)
-
+    github_filename = f"{safe_name}-{client}-{uid}{ext}"
+    file_url = await upload_to_github(github_filename, content)
     # Salva no banco via ORM (parameterizado — seguro)
     data = {
         "name": sanitize_text(name, 100),
