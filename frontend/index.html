@@ -470,8 +470,7 @@ function render(list){
     return `<div class="card" style="animation-delay:${(i%12)*22}ms">
       <div class="ct"><div><div class="cn">${esc(c.name)}.json</div><div class="cby">by <b>${esc(c.author)}</b></div></div><span class="ttag ${tc}">${c.type}</span></div>
       <div class="cm">${desc}<div class="ctags">${ctag}${stag}</div></div>
-      <div class="cb"><span class="cdate">${date}</span><div class="cacts"><a class="dlb" href="${esc(c.file_url)}" target="_blank" download>↓ DL</a>${canDel?`<button class="delb" onclick="delCfg(${c.id})">🗑</button>`:''}</div></div>
-    </div>`;
+      <div class="cb"><span class="cdate">${date}</span><div class="cacts"><button class="dlb" onclick="forceDownload('${esc(c.file_url)}','${esc(c.name)}')">↓ DL</button>${canDel?`<button class="delb" onclick="delCfg(${c.id})">🗑</button>`:''}</div></div>
   }).join('');
 }
 
