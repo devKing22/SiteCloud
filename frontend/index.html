@@ -399,33 +399,39 @@ window.addEventListener('DOMContentLoaded',()=>{
   load();
 });
 
-async function api(m,p,b,f){
-  const h={};
+async function api(m, p, b, f) {
+  const h = {};
 
-  if(token) h['Authorization']='Bearer '+token;
-
-  if(!f){
-    h['Content-Type']='application/json';
+  // Só adiciona Authorization se o token existir E for válido
+  if (token) {
+    h['Authorization'] = 'Bearer ' + token;
   }
 
-  const r = await fetch(API+p,{
+  if (!f) {
+    h['Content-Type'] = 'application/json';
+  }
+
+  const r = await fetch(API + p, {
     method: m,
     headers: h,
     body: f ? b : (b ? JSON.stringify(b) : undefined)
   });
 
   const text = await r.text();
-
   let d;
-  try{
-    d = JSON.parse(text);
-  }catch{
-    console.log("RESPOSTA BRUTA:", text);
-    d = {};
+  try { d = JSON.parse(text); } catch { d = {}; }
+
+  // Se 401, limpa a sessão e força novo login
+  if (r.status === 401) {
+    user = null;
+    token = null;
+    localStorage.removeItem('mc_s');
+    updH();
+    showToast('⚠ Sessão expirada, faça login novamente.', true);
+    throw new Error('Sessão expirada');
   }
 
-  if(!r.ok) throw new Error(d.detail || text || 'Erro');
-
+  if (!r.ok) throw new Error(d.detail || text || 'Erro');
   return d;
 }
 async function load(){
