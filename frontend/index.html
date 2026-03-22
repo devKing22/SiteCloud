@@ -654,7 +654,11 @@ async function openAdm(){
     document.getElementById('aT').textContent=stats.total_configs;
     document.getElementById('aL').textContent=stats.by_type?.legit||0;
     document.getElementById('aB').textContent=stats.by_type?.blatant||0;
-    document.getElementById('admList').innerHTML=(cfgs.configs||[]).slice(0,8).map(c=>`<div class="ar"><div class="ar-info"><div class="ar-name">${esc(c.name)}.json</div><div class="ar-by">by ${esc(c.author)} · ${c.type}</div></div><button class="btn btn-r btn-sm" onclick="aDel(${c.id})">DELETAR</button></div>`).join('');
+    document.getElementById('admList').innerHTML = (cfgs.configs||[]).slice(0,8).map(c =>
+  '<div class="ar"><div class="ar-info"><div class="ar-name">' + esc(c.name) + '.json</div>' +
+  '<div class="ar-by">by ' + esc(c.author) + ' · ' + c.type + '</div></div>' +
+  '<button class="btn btn-r btn-sm" onclick="aDel(' + c.id + ')">DELETAR</button></div>'
+).join('');
   }catch(e){showToast('Erro: '+e.message,true);}
 }
 function closeAdm(){document.getElementById('admOv').classList.remove('open');}
