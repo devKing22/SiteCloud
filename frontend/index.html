@@ -431,6 +431,23 @@ async function api(m, p, b, f) {
   if (!r.ok) throw new Error(d.detail || text || 'Erro');
   return d;
 }
+
+async function forceDownload(url, name) {
+  try {
+    const r = await fetch(url);
+    const blob = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  } catch(e) {
+    showToast('⚠ Erro ao baixar: ' + e.message, true);
+  }
+}
+  
 async function load(){
   const q=document.getElementById('si').value;
   const client=document.getElementById('clientFilter')?.value||'all';
