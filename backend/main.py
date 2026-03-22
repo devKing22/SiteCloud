@@ -115,6 +115,7 @@ async def register(request: Request):
         raise HTTPException(status_code=400, detail="Email ou senha inválidos")
 
     try:
+        print("EMAIL RECEBIDO:", repr(email))
         res = supabase.auth.sign_up({"email": email, "password": password})
         return {"message": "Verifique seu email para confirmar o cadastro!"}
     except Exception as e:
