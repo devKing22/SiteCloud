@@ -411,7 +411,14 @@ async function forceDownload(url, name) {
     var blob = await r.blob();
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = name;
+
+    // Pega a extensão da URL original
+    var urlParts = url.split('?')[0].split('.');
+    var ext = urlParts.length > 1 ? '.' + urlParts[urlParts.length - 1] : '';
+    // Se não tiver extensão reconhecida, não adiciona nada
+    if(ext !== '.json' && ext !== '.txt') ext = '';
+    a.download = name + ext;
+
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -420,7 +427,6 @@ async function forceDownload(url, name) {
     showToast('Erro ao baixar: ' + e.message, true);
   }
 }
-
 async function load() {
   var q = document.getElementById('si').value;
   var client = document.getElementById('clientFilter') ? document.getElementById('clientFilter').value : 'all';
