@@ -401,15 +401,8 @@ window.addEventListener('DOMContentLoaded',()=>{
 
 async function api(m, p, b, f) {
   const h = {};
-
-  // Só adiciona Authorization se o token existir E for válido
-  if (token) {
-    h['Authorization'] = 'Bearer ' + token;
-  }
-
-  if (!f) {
-    h['Content-Type'] = 'application/json';
-  }
+  if (token) h['Authorization'] = 'Bearer ' + token;
+  if (!f) h['Content-Type'] = 'application/json';
 
   const r = await fetch(API + p, {
     method: m,
@@ -419,9 +412,13 @@ async function api(m, p, b, f) {
 
   const text = await r.text();
   let d;
-  try { d = JSON.parse(text); } catch { d = {}; }
+  try {
+    d = JSON.parse(text);
+  } catch {
+    console.log("RESPOSTA BRUTA:", text); // ← vai mostrar o HTML no console
+    d = {};
+  }
 
-  // Se 401, limpa a sessão e força novo login
   if (r.status === 401) {
     user = null;
     token = null;
