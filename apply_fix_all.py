@@ -1,359 +1,416 @@
 from pathlib import Path
-from datetime import datetime
+import re
 
 ROOT = Path(".")
 BACKEND = ROOT / "backend" / "main.py"
-FRONT = ROOT / "frontend" / "index.html"
-MIG = ROOT / "backend" / "migrations" / f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_config_heaven.sql"
+FRONTEND = ROOT / "frontend" / "index.html"
+ROOT_VERCEL = ROOT / "vercel.json"
+FRONTEND_VERCEL = ROOT / "frontend" / "vercel.json"
+ROOT_MAIN = ROOT / "main.py"
+
+def must_read(path: Path) -> str:
+    if not path.exists():
+        raise FileNotFoundError(f"Arquivo não encontrado: {path}")
+    return path.read_text(encoding="utf-8")
 
 def write(path: Path, content: str):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
 
-def patch_sql():
-    sql = """
--- ===========================
--- Config Heaven migration
--- ===========================
-
--- configs extras
-alter table if exists configs
-  add column if not exists client text,
-  add column if not exists server text,
-  add column if not exists views bigint default 0;
-
--- profile username fields (na tabela de usuários da app)
-create table if not exists profiles (
-  user_id text primary key,
-  username text unique,
-  username_changed_at timestamptz default now()
-);
-
--- reviews por config (1..5)
-create table if not exists config_reviews (
-  id bigserial primary key,
-  config_id bigint not null,
-  user_id text not null,
-  stars int not null check (stars >= 1 and stars <= 5),
-  created_at timestamptz default now(),
-  unique(config_id, user_id)
-);
-
--- comments por config
-create table if not exists config_comments (
-  id bigserial primary key,
-  config_id bigint not null,
-  user_id text not null,
-  author text not null,
-  comment text not null,
-  created_at timestamptz default now()
-);
-
-create index if not exists idx_config_reviews_config_id on config_reviews(config_id);
-create index if not exists idx_config_comments_config_id on config_comments(config_id);
-"""
-    write(MIG, sql.strip() + "\n")
-
 def patch_backend():
-    text = BACKEND.read_text(encoding="utf-8")
+    text = must_read(BACKEND)
 
-    # Nome do site/API
-    text = text.replace('FastAPI(title="OpenConfigs API", version="1.0.0")',
-                        'FastAPI(title="Config Heaven API", version="2.0.0")')
-
-    # allowed types
-    text = text.replace(
-        'allowed_types = {"legit", "blatant", "ghost"}',
-        'allowed_types = {"legit", "blatant", "ghost"}'
+    # 1) list_configs assinatura + filtros novos + supabase_admin
+    pattern_list = re.compile(
+        r'@app\.get\("/configs"\)\s*'
+        r'async def list_configs\([^\)]*\):\s*'
+        r'"""Lista configs públicas\. Usa parâmetros — sem concatenação de string\."""'
+        r'[\s\S]*?'
+        r'return \{"configs": res\.data\}',
+        re.MULTILINE
     )
 
-    # allowed clients completo
-    text = text.replace(
-        'allowed_clients = {"augustus", "astolfo", "slinky", "myau", "myau+", "avocado", "vestigereborn"}',
-        'allowed_clients = {"augustus", "astolfo", "slinky", "myau", "myau+", "avocado", "vestigereborn", "doomsday", "haru", "elixe", "liquidbounce", "sigma5", "sigma4.11", "ravenb-", "biggie", "exhibition"}'
-    )
-
-    # Inserir endpoints extras se não existirem
-    if '@app.post("/configs/{config_id}/view")' not in text:
-        text += """
-
-@app.post("/configs/{config_id}/view")
-async def add_view(config_id: int):
-    row = supabase_admin.table("configs").select("id,views").eq("id", config_id).execute()
-    if not row.data:
-        raise HTTPException(status_code=404, detail="Config não encontrada")
-    current = row.data[0].get("views") or 0
-    supabase_admin.table("configs").update({"views": current + 1}).eq("id", config_id).execute()
-    return {"views": current + 1}
-
-@app.get("/configs/{config_id}/reviews")
-async def get_reviews(config_id: int):
-    rv = supabase_admin.table("config_reviews").select("*").eq("config_id", config_id).execute()
-    cm = supabase_admin.table("config_comments").select("*").eq("config_id", config_id).order("created_at", desc=True).execute()
-    stars = [r["stars"] for r in rv.data] if rv.data else []
-    avg = (sum(stars) / len(stars)) if stars else 0
-    return {"avg": avg, "count": len(stars), "comments": cm.data or []}
-
-@app.post("/configs/{config_id}/reviews")
-async def upsert_review(
-    config_id: int,
-    request: Request,
-    user=Depends(get_supabase_user)
+    replacement_list = '''@app.get("/configs")
+async def list_configs(
+    search: Optional[str] = None,
+    type: Optional[str] = None,
+    client: Optional[str] = None,
+    author: Optional[str] = None,
+    name: Optional[str] = None,
+    server: Optional[str] = None,
 ):
-    body = await request.json()
-    stars = int(body.get("stars", 0))
-    comment = sanitize_text(body.get("comment", ""), 500)
+    """Lista configs públicas. Usa parâmetros — sem concatenação de string."""
+    # Usa service role para leitura pública independente de políticas RLS
+    query = supabase_admin.table("configs").select("*").order("created_at", desc=True)
 
-    if stars < 1 or stars > 5:
-        raise HTTPException(status_code=400, detail="Stars deve ser entre 1 e 5")
+    # Filtros via ORM do Supabase (sem SQL cru — seguro contra injection)
+    if type and type != "all":
+        query = query.eq("type", sanitize_text(type, 50))
+    if client and client != "all":
+        query = query.eq("client", sanitize_text(client, 50))
+    if server and server != "all":
+        query = query.eq("server", sanitize_text(server, 50))
+    if author:
+        query = query.ilike("author", f"%{sanitize_text(author, 80)}%")
+    if name:
+        query = query.ilike("name", f"%{sanitize_text(name, 100)}%")
+    if search:
+        clean_search = sanitize_text(search, 100)
+        query = query.or_(f"name.ilike.%{clean_search}%,author.ilike.%{clean_search}%,desc.ilike.%{clean_search}%")
 
-    payload = {"config_id": config_id, "user_id": str(user.id), "stars": stars}
-    supabase_admin.table("config_reviews").upsert(payload, on_conflict="config_id,user_id").execute()
+    res = query.execute()
+    return {"configs": res.data}'''
 
-    if comment:
-        supabase_admin.table("config_comments").insert({
-            "config_id": config_id,
-            "user_id": str(user.id),
-            "author": user.email.split("@")[0] if user.email else "user",
-            "comment": comment
-        }).execute()
+    text, n1 = pattern_list.subn(replacement_list, text, count=1)
+    if n1 == 0:
+        raise RuntimeError("Não consegui localizar/substituir bloco list_configs em backend/main.py")
 
-    return {"message": "Review salva"}
+    # 2) create_config assinatura e corpo (bloco inteiro)
+    pattern_create = re.compile(
+        r'@app\.post\("/configs"\)\s*'
+        r'async def create_config\([\s\S]*?\):'
+        r'[\s\S]*?'
+        r'(?=@app\.delete\("/configs/\{config_id\}"\))',
+        re.MULTILINE
+    )
 
-@app.get("/me/profile")
-async def my_profile(user=Depends(get_supabase_user)):
-    row = supabase_admin.table("profiles").select("*").eq("user_id", str(user.id)).execute()
-    if row.data:
-        return row.data[0]
-    default_username = (user.email.split("@")[0] if user.email else f"user_{str(user.id)[:6]}")
-    ins = supabase_admin.table("profiles").insert({
+    replacement_create = '''@app.post("/configs")
+async def create_config(
+    name: str = Form(...),
+    author: str = Form(...),
+    client: str = Form(...),
+    type: str = Form(...),
+    desc: str = Form(""),
+    server: str = Form("outro"),
+    file: UploadFile = File(...),
+    user=Depends(get_supabase_user),
+):
+    """Cria config. Usuário precisa estar logado e com email confirmado."""
+    # Verifica email confirmado
+    if not user.email_confirmed_at:
+        raise HTTPException(status_code=403, detail="Confirme seu email primeiro")
+
+    # Valida tipo
+    allowed_types = {"legit", "blatant", "ghost"}
+    if type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Tipo inválido")
+
+    # Valida client
+    allowed_clients = {"augustus", "astolfo", "slinky", "myau", "myau+", "avocado", "vestigereborn"}
+    if sanitize_text(client, 50).lower() not in allowed_clients:
+        raise HTTPException(status_code=400, detail="Client inválido")
+
+    # Valida arquivo (.json/.txt)
+    if not (file.filename.endswith(".json") or file.filename.endswith(".txt")):
+        raise HTTPException(status_code=400, detail="Apenas arquivos .json ou .txt")
+
+    content = await file.read()
+    if len(content) > 10 * 1024 * 1024:  # 10MB max
+        raise HTTPException(status_code=400, detail="Arquivo muito grande (max 10MB)")
+
+    # Valida JSON apenas quando for .json
+    if file.filename.endswith(".json"):
+        try:
+            json.loads(content)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Arquivo JSON inválido")
+
+    # Upload GitHub
+    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    safe_name = sanitize_text(name, 50).replace(" ", "_")
+    ext = ".txt" if file.filename.endswith(".txt") else ".json"
+    filename = f"{timestamp}-{safe_name}-by-{sanitize_text(author, 30)}{ext}"
+    file_url = await upload_to_github(filename, content)
+
+    # Salva no banco via ORM (parameterizado — seguro)
+    data = {
+        "name": sanitize_text(name, 100),
+        "author": sanitize_text(author, 80),
+        "client": sanitize_text(client, 50),
+        "type": type,
+        "desc": sanitize_text(desc, 500),
+        "file_url": file_url,
+        "server": sanitize_text(server, 50),
         "user_id": str(user.id),
-        "username": default_username
-    }).execute()
-    return ins.data[0]
+    }
 
-@app.post("/me/profile/username")
-async def change_username(request: Request, user=Depends(get_supabase_user)):
-    body = await request.json()
-    new_username = sanitize_text(body.get("username", ""), 30)
-    if not new_username:
-        raise HTTPException(status_code=400, detail="Username inválido")
+    try:
+        # Usa service role no backend para evitar bloqueio por RLS
+        res = supabase_admin.table("configs").insert(data).execute()
+        return {"config": res.data[0]}
+    except Exception:
+        raise HTTPException(status_code=500, detail="Erro ao salvar config no banco")
 
-    row = supabase_admin.table("profiles").select("*").eq("user_id", str(user.id)).execute()
-    if not row.data:
-        profile = supabase_admin.table("profiles").insert({
-            "user_id": str(user.id),
-            "username": new_username
-        }).execute().data[0]
-        return profile
+'''
 
-    profile = row.data[0]
-    last_changed = profile.get("username_changed_at")
-    if last_changed:
-        from datetime import datetime, timezone
-        dt = datetime.fromisoformat(last_changed.replace("Z", "+00:00"))
-        now = datetime.now(timezone.utc)
-        delta_days = (now - dt).days
-        if delta_days < 7:
-            raise HTTPException(status_code=400, detail=f"Você só pode mudar o username após 7 dias. Faltam {7-delta_days} dia(s).")
+    text, n2 = pattern_create.subn(replacement_create, text, count=1)
+    if n2 == 0:
+        raise RuntimeError("Não consegui localizar/substituir bloco create_config em backend/main.py")
 
-    up = supabase_admin.table("profiles").update({
-        "username": new_username,
-        "username_changed_at": datetime.utcnow().isoformat()
-    }).eq("user_id", str(user.id)).execute()
-    return up.data[0]
-"""
+    # 3) garante supabase_admin em delete_config / admin_delete_config
+    text = text.replace(
+        'res = supabase.table("configs").select("*").eq("id", config_id).execute()',
+        'res = supabase_admin.table("configs").select("*").eq("id", config_id).execute()'
+    )
+    text = text.replace(
+        'supabase.table("configs").delete().eq("id", config_id).execute()',
+        'supabase_admin.table("configs").delete().eq("id", config_id).execute()'
+    )
+
+    # 4) adiciona /me/configs se não existir
+    if '@app.get("/me/configs")' not in text:
+        anchor = '@app.delete("/admin/configs/{config_id}")'
+        idx = text.find(anchor)
+        if idx == -1:
+            raise RuntimeError("Não encontrei âncora para inserir /me/configs no backend/main.py")
+        insert_block = '''
+@app.get("/me/configs")
+async def my_configs(user=Depends(get_supabase_user)):
+    """Lista configs do usuário logado."""
+    res = supabase_admin.table("configs").select("*").eq("user_id", str(user.id)).order("created_at", desc=True).execute()
+    return {"configs": res.data}
+
+'''
+        text = text[:idx] + insert_block + text[idx:]
 
     write(BACKEND, text)
 
 def patch_frontend():
-    # React CDN single-file frontend
-    html = """<!doctype html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Config Heaven</title>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>
-    body{margin:0;background:#070b12;color:#e8eef8;font-family:Inter,system-ui}
-    .wrap{max-width:1100px;margin:0 auto;padding:24px}
-    .title{font-size:42px;font-weight:900}
-    .sub{opacity:.85;margin-bottom:18px}
-    .card{background:#101827;border:1px solid #1f2937;border-radius:14px;padding:14px;margin:10px 0}
-    .row{display:flex;gap:10px;flex-wrap:wrap}
-    .btn{background:#00e4b6;color:#04120f;border:0;padding:8px 12px;border-radius:10px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
-    .pill{padding:4px 10px;border-radius:999px;background:#0b1320;border:1px solid #1f2937}
-    input,select,textarea{background:#0b1220;color:#dfe8f6;border:1px solid #273244;border-radius:8px;padding:8px;width:100%}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
-    .srv img{width:34px;height:34px;border-radius:999px}
-    .muted{opacity:.75;font-size:13px}
-  </style>
-</head>
-<body>
-  <div id="app"></div>
+    html = must_read(FRONTEND)
 
-  <script type="text/babel">
-    const API = '/api';
+    # API relative
+    html = html.replace(
+        "const API = 'https://sitecloud-production.up.railway.app';",
+        "const API = '/api';"
+    )
 
-    const SERVERS = [
-      {name:'hylex.gg', detector:'grim', img:'https://static-cdn.jtvnw.net/jtv_user_pictures/8cc858dd-345b-46fe-b59d-355bd1463141-profile_image-300x300.png'},
-      {name:'Kaizen', detector:'grim', img:'https://yt3.googleusercontent.com/8GrA2kC2lG-DXJJI6SHrcELQHZN3IfD_2UbQUd4SJX3GYrVyOFs1nncCNV0roZFBL9pLrlnMBGk=s160-c-k-c0x00ffffff-no-rj'},
-      {name:'Mush', detector:'Mush-Prediction', img:'https://static-cdn.jtvnw.net/jtv_user_pictures/8cc858dd-345b-46fe-b59d-355bd1463141-profile_image-300x300.png'}
-    ];
+    # Header buttons download/perfil
+    html = html.replace(
+        '''    <div id="hauth">
+      <button class="btn btn-o btn-sm" onclick="openAuth()">LOGIN</button>
+      <button class="btn btn-g btn-sm" onclick="openAuth('register')">CADASTRAR</button>
+    </div>''',
+        '''    <button class="btn btn-o btn-sm" onclick="openDL()">DOWNLOAD</button>
+    <button class="btn btn-o btn-sm" onclick="openProfile()">PERFIL</button>
+    <div id="hauth">
+      <button class="btn btn-o btn-sm" onclick="openAuth()">LOGIN</button>
+      <button class="btn btn-g btn-sm" onclick="openAuth('register')">CADASTRAR</button>
+    </div>'''
+    )
 
-    const DOWNLOADS = {
-      Legit: [
-        ['Slinky','https://www.mediafire.com/file/1o209cxbzkpz58i/slinkyload.zip/file'],
-        ['Doomsday','https://doomsdayclient.com/'],
-        ['Haru','https://www.mediafire.com/file/palkwq3pcdak4ql/Haru-2.38.jar/file'],
-        ['Elixe','https://github.com/ponei/elixe/releases/tag/7'],
-      ],
-      Blatant: [
-        ['Astolfo','https://www.mediafire.com/file/18xq7e4wij0ox4j/Astolfo-LATEST.zip/file'],
-        ['Augustus (cc)','https://www.mediafire.com/file/n43lmn7p7c8as4b/Augustus.zip/file'],
-        ['Myau','https://www.mediafire.com/file/h7usx9o2s98wd4z/MYAU.jar/file'],
-        ['Myau+','https://github.com/IamNespola/OpenMyau-Plus/releases'],
-        ['Avocado','https://www.mediafire.com/file/qc76zztrq689c6m/avocado-b1.5.jar/file'],
-        ['VestigeR','https://www.mediafire.com/file/ieny7lgmzc7hglq/VestigeR+1.1.0-1.zip/file'],
-        ['LiquidBounce','https://github.com/CCBlueX/LiquidLauncher/releases/download/v0.5.0/LiquidLauncher_0.5.0_x64_en-US.msi'],
-        ['Sigma 5.0','https://www.mediafire.com/file/kn8lcf562gduhtl/Sigma5.rar/file'],
-        ['Sigma 4.11','https://www.mediafire.com/file/7ahv0sgq87zhfba/Sigma.zip/file'],
-        ['RavenB-','https://www.mediafire.com/file/kvgasv2le25rv73/RavenB-Cracked.jar/file'],
-        ['Biggie','https://www.mediafire.com/file/twfnzshqn2fppkm/Biggie.rar/file'],
-      ],
-      HvH: [
-        ['Exhibition','https://www.mediafire.com/file/wifn28ba26mt68d/2024.rar/file'],
-        ['libraries.rar','https://www.mediafire.com/file/71wra3nk7ma8zab/libraries.rar/file']
-      ]
-    };
+    # Servers include "outro"
+    html = html.replace(
+        '''  <div class="srv srv-kaizen" onclick="toggleSrv('kaizen',this)"> Kaizen</div>
+</div>''',
+        '''  <div class="srv srv-kaizen" onclick="toggleSrv('kaizen',this)"> Kaizen</div>
+  <div class="srv" onclick="toggleSrv('outro',this)"> Outro</div>
+</div>'''
+    )
 
-    const CLIENT_OPTIONS = [
-      'slinky','doomsday','haru','elixe',
-      'astolfo','augustus','myau','myau+','avocado','vestigereborn','liquidbounce','sigma5','sigma4.11','ravenb-','biggie',
-      'exhibition'
-    ];
+    # Controls block
+    html = html.replace(
+        '''<div class="controls">
+  <div class="sw">
+    <span class="si">//</span>
+    <input type="text" id="si" placeholder="buscar config, autor..." oninput="deb()">
+  </div>
+  <div class="ftags">
+    <span class="ft on" onclick="setF('all',this)">Todas</span>
+    <span class="ft" onclick="setF('legit',this)">Legit</span>
+    <span class="ft" onclick="setF('closet',this)">Closet</span>
+    <span class="ft" onclick="setF('blatant',this)">Blatant</span>
+    <span class="ft" onclick="setF('bedwars',this)">BedWars</span>
+    <span class="ft" onclick="setF('pvp',this)">PvP</span>
+  </div>
+</div>''',
+        '''<div class="controls">
+  <div class="sw">
+    <span class="si">//</span>
+    <input type="text" id="si" placeholder="buscar nome/autor/descrição..." oninput="deb()">
+  </div>
+  <div class="fg" style="max-width:460px;margin:8px auto 0">
+    <label>Client</label>
+    <select id="clientFilter" onchange="load()">
+      <option value="all">Todos</option><option value="augustus">Augustus</option><option value="astolfo">Astolfo</option><option value="slinky">Slinky</option><option value="myau">Myau</option><option value="myau+">Myau+</option><option value="avocado">Avocado</option><option value="vestigereborn">VestigeReborn</option>
+    </select>
+  </div>
+  <div class="fg" style="max-width:460px;margin:8px auto 0">
+    <label>Formato</label>
+    <select id="extFilter" onchange="load()"><option value="all">Todos</option><option value="json">JSON</option><option value="txt">TXT</option></select>
+  </div>
+  <div class="ftags">
+    <span class="ft on" onclick="setF('all',this)">Todas</span>
+    <span class="ft" onclick="setF('legit',this)">Legit</span>
+    <span class="ft" onclick="setF('blatant',this)">Blatant</span>
+    <span class="ft" onclick="setF('ghost',this)">Ghost</span>
+  </div>
+</div>'''
+    )
 
-    async function api(method, path, body){
-      const st = localStorage.getItem('mc_s');
-      const token = st ? JSON.parse(st).t : null;
-      const headers = {'Content-Type':'application/json'};
-      if(token) headers['Authorization'] = 'Bearer ' + token;
-      const r = await fetch(API + path, {method, headers, body: body ? JSON.stringify(body) : undefined});
-      const d = await r.json().catch(()=>({}));
-      if(!r.ok) throw new Error(d.detail || 'Erro');
-      return d;
-    }
+    # Upload selects
+    html = html.replace(
+        '''    <div class="fg"><label>Tipo</label>
+      <select id="uT"><option value="legit">Legit</option><option value="closet">Closet</option><option value="blatant">Blatant</option><option value="pvp">PvP</option><option value="bedwars">BedWars</option><option value="outro">Outro</option></select>
+    </div>''',
+        '''    <div class="fg"><label>Client</label>
+      <select id="uC"><option value="augustus">Augustus</option><option value="astolfo">Astolfo</option><option value="slinky">Slinky</option><option value="myau">Myau</option><option value="myau+">Myau+</option><option value="avocado">Avocado</option><option value="vestigereborn">VestigeReborn</option></select>
+    </div>
+    <div class="fg"><label>Tipo</label>
+      <select id="uT"><option value="legit">Legit</option><option value="blatant">Blatant</option><option value="ghost">Ghost</option></select>
+    </div>'''
+    )
 
-    function App(){
-      const [configs,setConfigs] = React.useState([]);
-      const [q,setQ] = React.useState('');
-      const [client,setClient] = React.useState('all');
-      const [type,setType] = React.useState('all');
+    html = html.replace('<label>Arquivo .json</label>', '<label>Arquivo .json/.txt</label>')
+    html = html.replace(
+        '<input type="file" id="fileInput" accept=".json" onchange="hFile(this)">',
+        '<input type="file" id="fileInput" accept=".json,.txt" onchange="hFile(this)">'
+    )
 
-      const load = async ()=>{
-        let url = '/configs?';
-        if(type!=='all') url += `type=${encodeURIComponent(type)}&`;
-        if(client!=='all') url += `client=${encodeURIComponent(client)}&`;
-        if(q) url += `search=${encodeURIComponent(q)}&`;
-        const d = await api('GET',url);
-        setConfigs(d.configs||[]);
-      };
+    # Add modals profile/download
+    html = html.replace(
+        '<div class="toast" id="toast"></div>',
+        '''<!-- PROFILE -->
+<div class="ov" id="profOv">
+  <div class="modal" style="max-width:760px">
+    <div class="mh"><div class="mt">MEU PERFIL</div><button class="mc" onclick="closeProfile()">✕</button></div>
+    <div id="profList" class="al"></div>
+  </div>
+</div>
 
-      React.useEffect(()=>{ load().catch(()=>{}); },[]);
+<!-- DOWNLOADS -->
+<div class="ov" id="dlOv">
+  <div class="modal" style="max-width:760px">
+    <div class="mh"><div class="mt">DOWNLOADS</div><button class="mc" onclick="closeDL()">✕</button></div>
+    <div class="al" id="dlList"></div>
+  </div>
+</div>
 
-      const copyJvm = async ()=>{
-        const txt='-XX:+DisableAttachMechanism -Xss4m';
-        await navigator.clipboard.writeText(txt);
-        alert('Argumentos JVM copiados: ' + txt);
-      };
+<div class="toast" id="toast"></div>'''
+    )
 
-      return (
-        <div className="wrap">
-          <div className="title">Config Heaven</div>
-          <div className="sub">A Newgen of Blatant, Legit and Ghost configs</div>
+    # JS adjustments
+    html = html.replace(
+        "const TC = {legit:'t-legit',closet:'t-closet',blatant:'t-blatant',bedwars:'t-bedwars',pvp:'t-pvp',outro:'t-outro'};",
+        "const TC = {legit:'t-legit',blatant:'t-blatant',ghost:'t-closet'};"
+    )
 
-          <div className="card">
-            <div className="row srv">
-              {SERVERS.map(s=>(
-                <div key={s.name} className="pill row" style={{alignItems:'center'}}>
-                  <img src={s.img} alt={s.name}/>
-                  <div><b>{s.name}</b><div className="muted">{s.detector}</div></div>
-                </div>
-              ))}
-            </div>
-          </div>
+    html = html.replace(
+        '''async function load(){
+  const q=document.getElementById('si').value;
+  let url='/configs?';
+  if(filter!=='all')url+=`type=${filter}&`;
+  if(q)url+=`search=${encodeURIComponent(q)}`;
+  try{
+    const d=await api('GET',url);
+    let list=d.configs||[];
+    if(srvFilter)list=list.filter(c=>c.server===srvFilter);
+    render(list);
+    const tot=d.configs?.length||0;''',
+        '''async function load(){
+  const q=document.getElementById('si').value;
+  const client=document.getElementById('clientFilter')?.value||'all';
+  const ext=document.getElementById('extFilter')?.value||'all';
+  let url='/configs?';
+  if(filter!=='all')url+=`type=${filter}&`;
+  if(client!=='all')url+=`client=${encodeURIComponent(client)}&`;
+  if(srvFilter)url+=`server=${encodeURIComponent(srvFilter)}&`;
+  if(q)url+=`search=${encodeURIComponent(q)}`;
+  try{
+    const d=await api('GET',url);
+    let list=d.configs||[];
+    if(ext!=='all')list=list.filter(c=>(c.file_url||'').toLowerCase().endsWith('.'+ext));
+    render(list);
+    const tot=list.length||0;'''
+    )
 
-          <div className="card">
-            <div className="row">
-              <input placeholder="buscar..." value={q} onChange={e=>setQ(e.target.value)} />
-              <select value={client} onChange={e=>setClient(e.target.value)}>
-                <option value="all">Todos clients</option>
-                {CLIENT_OPTIONS.map(c=><option key={c} value={c}>{c}</option>)}
-              </select>
-              <select value={type} onChange={e=>setType(e.target.value)}>
-                <option value="all">Todos tipos</option>
-                <option value="legit">legit</option>
-                <option value="blatant">blatant</option>
-                <option value="ghost">ghost</option>
-              </select>
-              <button className="btn" onClick={load}>Filtrar</button>
-            </div>
-          </div>
+    html = html.replace(
+        "const stag=c.server?`<span class=\"stag ${sc}\">${se} ${c.server}</span>`:'';",
+        "const stag=c.server?`<span class=\"stag ${sc}\">${se} ${c.server}</span>`:'';\n    const ctag=c.client?`<span class=\"stag\">${esc(c.client)}</span>`:'';"
+    )
+    html = html.replace(
+        '<div class="cm">${desc}<div class="ctags">${stag}</div></div>',
+        '<div class="cm">${desc}<div class="ctags">${ctag}${stag}</div></div>'
+    )
 
-          <div className="grid">
-            {configs.map(c=>(
-              <div className="card" key={c.id}>
-                <b>{c.name || 'sem nome'}</b>
-                <div className="muted">{c.author} · {c.client} · {c.type}</div>
-                <div className="muted">{c.server || 'sem servidor'} · views: {c.views || 0}</div>
-                <div className="row" style={{marginTop:8}}>
-                  <a className="btn" href={c.file_url} target="_blank">Download</a>
-                </div>
-              </div>
-            ))}
-          </div>
+    html = html.replace(
+        "if(f?.name.endsWith('.json')){uFile=f;document.getElementById('fn').textContent='📎 '+f.name;}else showToast('⚠ Apenas .json!',true);",
+        "if(f&&(/\\.(json|txt)$/i).test(f.name)){uFile=f;document.getElementById('fn').textContent='📎 '+f.name;}else showToast('⚠ Apenas .json ou .txt!',true);"
+    )
 
-          <div className="card">
-            <h3>Downloads por categoria</h3>
-            {Object.entries(DOWNLOADS).map(([cat,list])=>(
-              <div key={cat} style={{marginBottom:12}}>
-                <b>{cat}</b>
-                <div className="row" style={{marginTop:8}}>
-                  {list.map(([name,url])=>(
-                    <a className="btn" key={name} href={url} target="_blank">{name}</a>
-                  ))}
-                </div>
-              </div>
-            ))}
-            <div className="card">
-              <b>Exhibition - aviso</b>
-              <div className="muted">Use os argumentos JVM:</div>
-              <button className="btn" onClick={copyJvm}>Copiar argumentos JVM</button>
-              <div className="muted" style={{marginTop:6}}>
-                Também extraia o <b>libraries.rar</b> dentro da pasta <b>.minecraft</b>.
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
+    html = html.replace(
+        '''async function submit(){
+  const n=document.getElementById('uN').value.trim(),a=document.getElementById('uA').value.trim(),t=document.getElementById('uT').value,s=document.getElementById('uS').value,d=document.getElementById('uD').value.trim();
+  if(!n||!a)return setUA('Preencha nome e nick');
+  if(!uFile)return setUA('Selecione um .json');''',
+        '''async function submit(){
+  const n=document.getElementById('uN').value.trim(),a=document.getElementById('uA').value.trim(),c=document.getElementById('uC').value,t=document.getElementById('uT').value,s=document.getElementById('uS').value,d=document.getElementById('uD').value.trim();
+  if(!n||!a)return setUA('Preencha nome e nick');
+  if(!uFile)return setUA('Selecione um .json/.txt');'''
+    )
 
-    ReactDOM.createRoot(document.getElementById('app')).render(<App />);
-  </script>
-</body>
-</html>
-"""
-    write(FRONT, html)
+    html = html.replace(
+        "form.append('name',n);form.append('author',a);form.append('type',t);form.append('server',s);",
+        "form.append('name',n);form.append('author',a);form.append('client',c);form.append('type',t);form.append('server',s);"
+    )
+
+    # inject JS helper functions at end
+    marker = "function setUA(msg){document.getElementById('upAlert').innerHTML=`<div class=\"ab ab-err\">${esc(msg)}</div>`;}"
+    addon = '''
+function openProfile(){if(!user){openAuth();return;}document.getElementById('profOv').classList.add('open');loadProfile();}
+function closeProfile(){document.getElementById('profOv').classList.remove('open');}
+document.getElementById('profOv').addEventListener('click',e=>{if(e.target===e.currentTarget)closeProfile();});
+async function loadProfile(){
+  try{
+    const d=await api('GET','/me/configs');
+    const list=d.configs||[];
+    document.getElementById('profList').innerHTML=list.length?list.map(c=>`<div class="ar"><div class="ar-info"><div class="ar-name">${esc(c.name||'sem-nome')}</div><div class="ar-by">${esc(c.client||'client')} · ${esc(c.type||'tipo')} · ${esc((c.created_at||'').split('T')[0])}</div></div><a class="btn btn-g btn-sm" href="${esc(c.file_url)}" target="_blank">ABRIR</a></div>`).join(''):'<div class="empty"><p>Você ainda não publicou configs.</p></div>';
+  }catch(e){showToast('Erro perfil: '+e.message,true);}
+}
+
+function openDL(){document.getElementById('dlOv').classList.add('open');renderDL();}
+function closeDL(){document.getElementById('dlOv').classList.remove('open');}
+document.getElementById('dlOv').addEventListener('click',e=>{if(e.target===e.currentTarget)closeDL();});
+function renderDL(){
+  const links=[
+    ['Slinky','https://www.mediafire.com/file/1o209cxbzkpz58i/slinkyload.zip/file'],
+    ['Myau','https://www.mediafire.com/file/h7usx9o2s98wd4z/MYAU.jar/file'],
+    ['Astolfo','https://www.mediafire.com/file/18xq7e4wij0ox4j/Astolfo-LATEST.zip/file'],
+    ['Augustus (CrackCrew{cc})','https://www.mediafire.com/file/n43lmn7p7c8as4b/Augustus.zip/file'],
+    ['Myau+','https://github.com/IamNespola/OpenMyau-Plus/releases'],
+    ['Avocado','https://www.mediafire.com/file/qc76zztrq689c6m/avocado-b1.5.jar/file'],
+    ['VestigeR','https://www.mediafire.com/file/ieny7lgmzc7hglq/VestigeR+1.1.0-1.zip/file']
+  ];
+  document.getElementById('dlList').innerHTML=links.map(([n,u])=>`<div class="ar"><div class="ar-info"><div class="ar-name">${esc(n)}</div><div class="ar-by">Link oficial</div></div><a class="btn btn-g btn-sm" href="${esc(u)}" target="_blank">DOWNLOAD</a></div>`).join('');
+}'''
+    if marker in html and "function openProfile()" not in html:
+        html = html.replace(marker, marker + "\n" + addon)
+
+    write(FRONTEND, html)
+
+def write_configs():
+    write(ROOT_MAIN, '"""Entrypoint para deploys que usam `uvicorn main:app`."""\n\nfrom backend.main import app\n')
+
+    write(ROOT_VERCEL, '''{
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://sitecloud-production.up.railway.app/:path*" },
+    { "source": "/(.*)", "destination": "/frontend/index.html" }
+  ]
+}
+''')
+
+    write(FRONTEND_VERCEL, '''{
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://sitecloud-production.up.railway.app/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+''')
 
 def main():
-    patch_sql()
     patch_backend()
     patch_frontend()
-    print("✅ apply_fix_all concluído.")
-    print(f"SQL migration criada em: {MIG}")
+    write_configs()
+    print("✅ apply_fix_all concluído com sucesso.")
 
 if __name__ == "__main__":
     main()

@@ -28,7 +28,7 @@ supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 security = HTTPBearer()
 
-app = FastAPI(title="Config Heaven API", version="2.0.0")
+app = FastAPI(title="OpenConfigs API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -196,7 +196,7 @@ async def create_config(
         raise HTTPException(status_code=400, detail="Tipo inválido")
 
     # Valida client
-    allowed_clients = {"augustus", "astolfo", "slinky", "myau", "myau+", "avocado", "vestigereborn", "doomsday", "haru", "elixe", "liquidbounce", "sigma5", "sigma4.11", "ravenb-", "biggie", "exhibition"}
+    allowed_clients = {"augustus", "astolfo", "slinky", "myau", "myau+", "avocado", "vestigereborn"}
     if sanitize_text(client, 50).lower() not in allowed_clients:
         raise HTTPException(status_code=400, detail="Client inválido")
 
@@ -296,90 +296,3 @@ async def admin_stats(admin=Depends(require_admin)):
 @app.get("/health")
 async def health():
     return {"status": "ok", "version": "1.0.0"}
-
-
-@app.post("/configs/{config_id}/view")
-async def add_view(config_id: int):
-    row = supabase_admin.table("configs").select("id,views").eq("id", config_id).execute()
-    if not row.data:
-        raise HTTPException(status_code=404, detail="Config não encontrada")
-    current = row.data[0].get("views") or 0
-    supabase_admin.table("configs").update({"views": current + 1}).eq("id", config_id).execute()
-    return {"views": current + 1}
-
-@app.get("/configs/{config_id}/reviews")
-async def get_reviews(config_id: int):
-    rv = supabase_admin.table("config_reviews").select("*").eq("config_id", config_id).execute()
-    cm = supabase_admin.table("config_comments").select("*").eq("config_id", config_id).order("created_at", desc=True).execute()
-    stars = [r["stars"] for r in rv.data] if rv.data else []
-    avg = (sum(stars) / len(stars)) if stars else 0
-    return {"avg": avg, "count": len(stars), "comments": cm.data or []}
-
-@app.post("/configs/{config_id}/reviews")
-async def upsert_review(
-    config_id: int,
-    request: Request,
-    user=Depends(get_supabase_user)
-):
-    body = await request.json()
-    stars = int(body.get("stars", 0))
-    comment = sanitize_text(body.get("comment", ""), 500)
-
-    if stars < 1 or stars > 5:
-        raise HTTPException(status_code=400, detail="Stars deve ser entre 1 e 5")
-
-    payload = {"config_id": config_id, "user_id": str(user.id), "stars": stars}
-    supabase_admin.table("config_reviews").upsert(payload, on_conflict="config_id,user_id").execute()
-
-    if comment:
-        supabase_admin.table("config_comments").insert({
-            "config_id": config_id,
-            "user_id": str(user.id),
-            "author": user.email.split("@")[0] if user.email else "user",
-            "comment": comment
-        }).execute()
-
-    return {"message": "Review salva"}
-
-@app.get("/me/profile")
-async def my_profile(user=Depends(get_supabase_user)):
-    row = supabase_admin.table("profiles").select("*").eq("user_id", str(user.id)).execute()
-    if row.data:
-        return row.data[0]
-    default_username = (user.email.split("@")[0] if user.email else f"user_{str(user.id)[:6]}")
-    ins = supabase_admin.table("profiles").insert({
-        "user_id": str(user.id),
-        "username": default_username
-    }).execute()
-    return ins.data[0]
-
-@app.post("/me/profile/username")
-async def change_username(request: Request, user=Depends(get_supabase_user)):
-    body = await request.json()
-    new_username = sanitize_text(body.get("username", ""), 30)
-    if not new_username:
-        raise HTTPException(status_code=400, detail="Username inválido")
-
-    row = supabase_admin.table("profiles").select("*").eq("user_id", str(user.id)).execute()
-    if not row.data:
-        profile = supabase_admin.table("profiles").insert({
-            "user_id": str(user.id),
-            "username": new_username
-        }).execute().data[0]
-        return profile
-
-    profile = row.data[0]
-    last_changed = profile.get("username_changed_at")
-    if last_changed:
-        from datetime import datetime, timezone
-        dt = datetime.fromisoformat(last_changed.replace("Z", "+00:00"))
-        now = datetime.now(timezone.utc)
-        delta_days = (now - dt).days
-        if delta_days < 7:
-            raise HTTPException(status_code=400, detail=f"Você só pode mudar o username após 7 dias. Faltam {7-delta_days} dia(s).")
-
-    up = supabase_admin.table("profiles").update({
-        "username": new_username,
-        "username_changed_at": datetime.utcnow().isoformat()
-    }).eq("user_id", str(user.id)).execute()
-    return up.data[0]
