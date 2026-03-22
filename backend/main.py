@@ -226,9 +226,13 @@ async def create_config(
         raise HTTPException(status_code=400, detail="Tipo inválido")
 
     # Valida client
-    allowed_clients = {"augustus", "astolfo", "slinky", "myau", "myau+", "avocado", "vestigereborn", "LiquidBounce", "Velarion"}
-    if sanitize_text(client, 50).lower() not in allowed_clients:
-        raise HTTPException(status_code=400, detail="Client inválido")
+    allowed_clients = {
+    "augustus", "astolfo", "slinky", "myau", "myau+",
+    "avocado", "vestigereborn", "liquidbounce", "velarion"
+}
+
+if sanitize_text(client, 50).lower() not in allowed_clients:
+    raise HTTPException(status_code=400, detail="Client inválido")
 
     # Valida arquivo (.json/.txt)
     if not (file.filename.endswith(".json") or file.filename.endswith(".txt")):
