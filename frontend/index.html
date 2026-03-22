@@ -516,54 +516,57 @@ async function doLogin(){
 async function doReg(){
   const e = document.getElementById('rE').value.trim();
   const p = document.getElementById('rP').value;
-
   if(!e || !p) return setAA('Preencha todos os campos');
   if(p.length < 8) return setAA('Senha muito curta (mín. 8)');
-
   try {
     await api('POST', '/auth/register', { email: e, password: p });
-    
-    // Esconde abas de login/register e mostra campo de código
     document.getElementById('aAlert').innerHTML = '';
-    document.querySelectorAll('.tp').forEach(p => p.classList.remove('on'));
+    document.querySelectorAll('.tp').forEach(t => t.classList.remove('on'));
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
 
-    // Injeta painel de verificação dinamicamente
     let vp = document.getElementById('pVerify');
     if(!vp){
       vp = document.createElement('div');
       vp.id = 'pVerify';
       vp.className = 'tp on';
-      vp.innerHTML = `
-  <div style='font-family:var(--font-mono);font-size:11px;color:var(--text-dim);margin-bottom:14px;line-height:1.7'>
-    Código enviado para <b style='color:var(--accent)'>${e}</b>.<br>Verifique sua caixa de entrada.
-  </div>
-  <div class='fg'>
-    <label>Código de 6 dígitos</label>
-    <input type='text' id='vCode' maxlength='6' placeholder='000000'
-      style='letter-spacing:6px;font-size:18px;text-align:center'
-      oninput='this.value=this.value.replace(/\\D/g,"")'
-      onkeydown='if(event.key==="Enter")doVerify()'>
-  </div>
-  <div class='mf'>
-    <button class='btn btn-o' onclick='swTab("register")'>Voltar</button>
-    <button class='btn btn-g' onclick='doVerify()'>VERIFICAR</button>
-  </div>
-`;
+
+      const info = document.createElement('div');
+      info.style.cssText = 'font-family:var(--font-mono);font-size:11px;color:var(--text-dim);margin-bottom:14px;line-height:1.7';
+      info.innerHTML = 'Código enviado para <b style="color:var(--accent)">' + e + '</b>.<br>Verifique sua caixa de entrada.';
+
+      const fg = document.createElement('div');
+      fg.className = 'fg';
+      fg.innerHTML = '<label>Código de 6 dígitos</label>';
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.id = 'vCode';
+      input.maxLength = 6;
+      input.placeholder = '000000';
+      input.style.cssText = 'letter-spacing:6px;font-size:18px;text-align:center';
+      input.oninput = function(){ this.value = this.value.replace(/\D/g,''); };
+      input.onkeydown = function(ev){ if(ev.key==='Enter') doVerify(); };
+
+      fg.appendChild(input);
+
+      const mf = document.createElement('div');
+      mf.className = 'mf';
+      mf.innerHTML = '<button class="btn btn-o" onclick="swTab(\'register\')">Voltar</button><button class="btn btn-g" onclick="doVerify()">VERIFICAR</button>';
+
+      vp.appendChild(info);
+      vp.appendChild(fg);
+      vp.appendChild(mf);
       document.getElementById('pRegister').parentNode.appendChild(vp);
     } else {
       vp.classList.add('on');
       document.getElementById('vCode').value = '';
     }
 
-    // Guarda email pra usar no verify
     window._pendingEmail = e;
-
   } catch(err) {
     setAA(err.message);
   }
 }
-
 async function doVerify(){
   const e = window._pendingEmail;
   const code = document.getElementById('vCode').value.trim();
