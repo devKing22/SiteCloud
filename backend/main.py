@@ -172,54 +172,54 @@ async def list_configs(
         query = query.or_(f"name.ilike.%{clean_search}%,author.ilike.%{clean_search}%,desc.ilike.%{clean_search}%")
 
     res = query.execute()
-    return {"configs": res.data}
+    configs = res.data or []
 
-@app.post("/configs")
-async def create_config(
-    name: str = Form(...),
-    author: str = Form(...),
-    client: str = Form(...),
-    type: str = Form(...),
-    desc: str = Form(""),
-    server: str = Form("outro"),
-    file: UploadFile = File(...),
-    user=Depends(get_supabase_user),
-):
-    """Cria config. Usuário precisa estar logado e com email confirmado."""
-    # Verifica email confirmado
-    if not user.email_confirmed_at:
-        raise HTTPException(status_code=403, detail="Confirme seu email primeiro")
+    config_ids = [c["id"] for c in configs if c.get("id") is not None]
+    reviews_by_config = {}
+    comments_count_by_config = {}
 
-    # Valida tipo
-    allowed_types = {"legit", "blatant", "ghost"}
-    if type not in allowed_types:
-        raise HTTPException(status_code=400, detail="Tipo inválido")
+    if config_ids:
+        reviews = (
+            supabase_admin.table("config_reviews")
+            .select("config_id,stars")
+            .in_("config_id", config_ids)
+            .execute()
+        )
+        for review in reviews.data or []:
+            cfg_id = review.get("config_id")
+            if cfg_id is None:
+                continue
+            reviews_by_config.setdefault(cfg_id, []).append(int(review.get("stars") or 0))
 
-    # Valida client
-    allowed_clients = {"augustus", "astolfo", "slinky", "myau", "myau+", "avocado", "vestigereborn"}
-    if sanitize_text(client, 50).lower() not in allowed_clients:
-        raise HTTPException(status_code=400, detail="Client inválido")
+        comments = (
+            supabase_admin.table("config_comments")
+            .select("config_id")
+            .in_("config_id", config_ids)
+            .execute()
+        )
+        for comment in comments.data or []:
+            cfg_id = comment.get("config_id")
+            if cfg_id is None:
+                continue
+            comments_count_by_config[cfg_id] = comments_count_by_config.get(cfg_id, 0) + 1
 
-    # Valida arquivo (.json/.txt)
-    if not (file.filename.endswith(".json") or file.filename.endswith(".txt")):
-        raise HTTPException(status_code=400, detail="Apenas arquivos .json ou .txt")
+    for config in configs:
+        cfg_id = config.get("id")
+        cfg_reviews = reviews_by_config.get(cfg_id, [])
+        reviews_count = len(cfg_reviews)
+        avg_stars = round(sum(cfg_reviews) / reviews_count, 2) if reviews_count else 0
+        config["reviews_count"] = reviews_count
+        config["stars_avg"] = avg_stars
+        config["comments_count"] = comments_count_by_config.get(cfg_id, 0)
+        config["views_count"] = int(config.get("views") or 0)
 
-    content = await file.read()
-    if len(content) > 10 * 1024 * 1024:  # 10MB max
-        raise HTTPException(status_code=400, detail="Arquivo muito grande (max 10MB)")
+    return {"configs": configs}
 
-    # Valida JSON apenas quando for .json
-    if file.filename.endswith(".json"):
-        try:
-            json.loads(content)
-        except Exception:
-            raise HTTPException(status_code=400, detail="Arquivo JSON inválido")
-
-    # Upload GitHub
-    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
-    safe_name = sanitize_text(name, 50).replace(" ", "_")
-    ext = ".txt" if file.filename.endswith(".txt") else ".json"
-    filename = f"{timestamp}-{safe_name}-by-{sanitize_text(author, 30)}{ext}"
+def ensure_config_exists(config_id: int):
+    cfg = supabase_admin.table("configs").select("id").eq("id", config_id).limit(1).execute()
+    if not cfg.data:
+        raise HTTPException(status_code=404, detail="Config não encontrada")
+    return cfg.data[0]
     file_url = await upload_to_github(filename, content)
 
     # Salva no banco via ORM (parameterizado — seguro)
