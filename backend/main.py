@@ -226,23 +226,21 @@ async def create_config(
         raise HTTPException(status_code=400, detail="Tipo inválido")
 
     # Valida client
+# Valida client
 allowed_clients = {
-    "augustus", "astolfo", "slinky", "myau", "myau+",
-    "avocado", "vestigereborn", "liquidbounce", "velarion",
-    "catlean", "mio", "doomsday"
-}
-
-if sanitize_text(client, 50).lower() not in allowed_clients:
-    raise HTTPException(status_code=400, detail="Client inválido")
-
-if sanitize_text(client, 50).lower() not in allowed_clients:
-    raise HTTPException(status_code=400, detail="Client inválido")
+        "augustus", "astolfo", "slinky", "myau", "myau+",
+        "avocado", "vestigereborn", "liquidbounce", "velarion",
+        "catlean", "mio", "doomsday"
+    }
+    if sanitize_text(client, 50).lower() not in allowed_clients:
+        raise HTTPException(status_code=400, detail="Client inválido")
 
     # Valida arquivo (.json/.txt)
     if not (file.filename.endswith(".json") or file.filename.endswith(".txt")):
         raise HTTPException(status_code=400, detail="Apenas arquivos .json ou .txt")
 
     content = await file.read()
+
     if len(content) > 10 * 1024 * 1024:  # 10MB max
         raise HTTPException(status_code=400, detail="Arquivo muito grande (max 10MB)")
 
