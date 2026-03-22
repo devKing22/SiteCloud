@@ -126,11 +126,15 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
 .s-mush { background:rgba(255,154,60,.1); color:#ff9a3c; }
 .s-hylex { background:rgba(77,166,255,.1); color:#4da6ff; }
 .s-kaizen { background:rgba(176,111,255,.1); color:#b06fff; }
+.cmeta { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.meta-pill { font-family:var(--font-mono); font-size:9px; color:var(--text-dim); border:1px solid var(--border); background:var(--bg2); border-radius:3px; padding:3px 7px; text-transform:uppercase; 
 .cb { padding:9px 15px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
 .cdate { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); }
 .cacts { display:flex; gap:5px; }
 .dlb { display:flex; align-items:center; gap:4px; background:var(--accent-dim); border:1px solid rgba(0,229,160,.18); color:var(--accent); padding:5px 11px; border-radius:3px; font-family:var(--font-mono); font-size:10px; font-weight:700; cursor:pointer; transition:all .14s; text-decoration:none; letter-spacing:.3px; text-transform:uppercase; }
 .dlb:hover { background:var(--accent); color:#000; border-color:var(--accent); }
+.cmb { display:flex; align-items:center; gap:4px; background:transparent; border:1px solid var(--border); color:var(--text-dim); padding:5px 11px; border-radius:3px; font-family:var(--font-mono); font-size:10px; font-weight:700; cursor:pointer; transition:all .14s; text-transform:uppercase; }
+.cmb:hover { border-color:var(--accent); color:var(--accent); }
 .delb { display:flex; align-items:center; background:transparent; border:1px solid var(--border); color:var(--text-muted); padding:5px 8px; border-radius:3px; cursor:pointer; font-size:11px; transition:all .14s; }
 .delb:hover { background:var(--red); color:#fff; border-color:var(--red); }
 
@@ -183,7 +187,16 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
 .ar-info { font-family:var(--font-mono); font-size:11px; }
 .ar-name { color:var(--text); }
 .ar-by { color:var(--text-muted); font-size:10px; }
-
+.stars-wrap { display:flex; gap:5px; margin:10px 0 14px; }
+.star-btn { background:transparent; border:1px solid var(--border); color:var(--text-muted); border-radius:4px; font-size:18px; width:34px; height:34px; cursor:pointer; transition:all .14s; }
+.star-btn.on, .star-btn:hover { color:#ffd166; border-color:#ffd166; background:rgba(255,209,102,.1); }
+.comment-list { display:flex; flex-direction:column; gap:7px; max-height:300px; overflow-y:auto; margin-top:10px; }
+.comment-item { background:var(--bg2); border:1px solid var(--border); border-radius:4px; padding:10px 12px; }
+.comment-head { display:flex; justify-content:space-between; gap:8px; align-items:center; margin-bottom:4px; }
+.comment-author { font-family:var(--font-mono); font-size:10px; color:var(--accent); text-transform:uppercase; }
+.comment-date { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); }
+.comment-text { font-size:12px; color:var(--text); line-height:1.5; white-space:pre-wrap; word-break:break-word; }
+            
 /* USER CHIP */
 .uc { display:flex; align-items:center; gap:6px; background:var(--surface2); border:1px solid var(--border); padding:4px 11px 4px 5px; border-radius:4px; cursor:pointer; transition:border-color .14s; }
 .uc:hover { border-color:var(--border-hi); }
@@ -354,7 +367,29 @@ header { position:sticky; top:0; z-index:100; height:56px; display:flex; align-i
     <div class="al" id="dlList"></div>
   </div>
 </div>
-
+  
+<!-- ENGAGEMENT -->
+<div class="ov" id="engOv">
+  <div class="modal" style="max-width:760px">
+    <div class="mh"><div class="mt" id="engTitle">CONFIG</div><button class="mc" onclick="closeEng()">✕</button></div>
+    <div id="engStats" class="ab ab-ok" style="margin-bottom:10px">Carregando...</div>
+    <div class="fg">
+      <label>Avaliação (1 a 5)</label>
+      <div class="stars-wrap" id="starWrap"></div>
+      <button class="btn btn-g btn-sm" onclick="sendReview()">Enviar avaliação</button>
+    </div>
+    <div class="fg">
+      <label>Comentário</label>
+      <textarea id="engCommentInput" placeholder="Deixe seu comentário sobre a config..."></textarea>
+      <div class="mf" style="margin-top:8px">
+        <button class="btn btn-o btn-sm" onclick="document.getElementById('engCommentInput').value=''">Limpar</button>
+        <button class="btn btn-g btn-sm" onclick="sendComment()">Comentar</button>
+      </div>
+    </div>
+    <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:10px">Comentários</div>
+    <div id="engComments" class="comment-list"></div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -366,6 +401,8 @@ const SE = {mush:'',hylex:'',kaizen:''};
 let user=null,token=null,filter='all',srvFilter=null,uFile=null,st=null;
 
 window.addEventListener('DOMContentLoaded',()=>{
+  let activeConfig=null,selectedStars=0;
+  let currentConfigs=[];
   const s=localStorage.getItem('mc_s');
   if(s){const d=JSON.parse(s);token=d.t;user=d.u;updH();}
   load();
@@ -407,6 +444,7 @@ async function load(){
 
 function render(list){
   document.getElementById('rCount').textContent=list.length+' resultado'+(list.length!==1?'s':'');
+  currentConfigs=list;
   if(!list.length){document.getElementById('grid').innerHTML='<div class="empty"><div class="empty-ico"></div><p>Nenhuma config encontrada.</p></div>';return;}
   document.getElementById('grid').innerHTML=list.map((c,i)=>{
     const tc=TC[c.type]||'t-outro';
@@ -418,10 +456,12 @@ function render(list){
     const stag=c.server?`<span class="stag ${sc}">${se} ${c.server}</span>`:'';
     const ctag=c.client?`<span class="stag">${esc(c.client)}</span>`:'';
     return `<div class="card" style="animation-delay:${(i%12)*22}ms">
+    const stars=Number(c.stars_avg||0).toFixed(1);
+    const comments=Number(c.comments_count||0);
+    const views=Number(c.views_count||0);
       <div class="ct"><div><div class="cn">${esc(c.name)}.json</div><div class="cby">by <b>${esc(c.author)}</b></div></div><span class="ttag ${tc}">${c.type}</span></div>
-      <div class="cm">${desc}<div class="ctags">${ctag}${stag}</div></div>
-      <div class="cb"><span class="cdate">${date}</span><div class="cacts"><a class="dlb" href="${esc(c.file_url)}" target="_blank" download>↓ DL</a>${canDel?`<button class="delb" onclick="delCfg(${c.id})">🗑</button>`:''}</div></div>
-    </div>`;
+       <div class="cm">${desc}<div class="ctags">${ctag}${stag}</div><div class="cmeta"><span class="meta-pill">⭐ ${stars} (${Number(c.reviews_count||0)})</span><span class="meta-pill">💬 ${comments}</span><span class="meta-pill">👁 ${views}</span></div></div>
+      <div class="cb"><span class="cdate">${date}</span><div class="cacts"><button class="cmb" onclick="openEngById(${c.id})">Ver</button><a class="dlb" href="${esc(c.file_url)}" target="_blank" download>↓ DL</a>${canDel?`<button class="delb" onclick="delCfg(${c.id})">🗑</button>`:''}</div></div>
   }).join('');
 }
 
@@ -531,6 +571,65 @@ function renderDL(){
     ['VestigeR','https://www.mediafire.com/file/ieny7lgmzc7hglq/VestigeR+1.1.0-1.zip/file']
   ];
   document.getElementById('dlList').innerHTML=links.map(([n,u])=>`<div class="ar"><div class="ar-info"><div class="ar-name">${esc(n)}</div><div class="ar-by">Link oficial</div></div><a class="btn btn-g btn-sm" href="${esc(u)}" target="_blank">DOWNLOAD</a></div>`).join('');
+}
+  function openEngById(configId){
+  const cfg=currentConfigs.find(c=>c.id===configId);
+  if(!cfg)return;
+  activeConfig=cfg;
+  selectedStars=0;
+  document.getElementById('engOv').classList.add('open');
+  document.getElementById('engTitle').textContent=`${cfg.name}.json`;
+  document.getElementById('engCommentInput').value='';
+  renderStars();
+  loadEngagement();
+  api('POST',`/configs/${cfg.id}/view`).then(()=>load()).catch(()=>{});
+}
+function closeEng(){document.getElementById('engOv').classList.remove('open');activeConfig=null;}
+document.getElementById('engOv').addEventListener('click',e=>{if(e.target===e.currentTarget)closeEng();});
+
+function renderStars(){
+  const wrap=document.getElementById('starWrap');
+  wrap.innerHTML=[1,2,3,4,5].map(i=>`<button class="star-btn ${i<=selectedStars?'on':''}" onclick="pickStars(${i})">★</button>`).join('');
+}
+function pickStars(stars){selectedStars=stars;renderStars();}
+
+async function loadEngagement(){
+  if(!activeConfig)return;
+  try{
+    const data=await api('GET',`/configs/${activeConfig.id}/engagement`);
+    const avg=Number(data.stars_avg||0).toFixed(1);
+    document.getElementById('engStats').innerHTML=`⭐ Média: <b>${avg}</b> · ${data.reviews_count||0} avaliações · ${data.comments_count||0} comentários`;
+    const comments=data.comments||[];
+    document.getElementById('engComments').innerHTML=comments.length?comments.map(c=>`<div class="comment-item"><div class="comment-head"><span class="comment-author">${esc(c.author||'Anônimo')}</span><span class="comment-date">${esc((c.created_at||'').split('T')[0]||'—')}</span></div><div class="comment-text">${esc(c.comment||'')}</div></div>`).join(''):'<div class="comment-item"><div class="comment-text">Sem comentários ainda.</div></div>';
+  }catch(e){
+    document.getElementById('engStats').innerHTML='Erro ao carregar engajamento: '+esc(e.message);
+  }
+}
+
+async function sendReview(){
+  if(!activeConfig)return;
+  if(!user){openAuth();return;}
+  if(!selectedStars)return showToast('Escolha de 1 a 5 estrelas',true);
+  try{
+    await api('POST',`/configs/${activeConfig.id}/reviews`,{stars:selectedStars});
+    showToast('✓ Avaliação salva');
+    await loadEngagement();
+    await load();
+  }catch(e){showToast('⚠ '+e.message,true);}
+}
+
+async function sendComment(){
+  if(!activeConfig)return;
+  if(!user){openAuth();return;}
+  const comment=document.getElementById('engCommentInput').value.trim();
+  if(comment.length<2)return showToast('Comentário muito curto',true);
+  try{
+    await api('POST',`/configs/${activeConfig.id}/comments`,{comment});
+    document.getElementById('engCommentInput').value='';
+    showToast('✓ Comentário enviado');
+    await loadEngagement();
+    await load();
+  }catch(e){showToast('⚠ '+e.message,true);}
 }
 </script>
 </body>
