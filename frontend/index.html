@@ -402,7 +402,14 @@ async function api(m, p, b, f) {
     showToast('Sessao expirada, faca login novamente.', true);
     throw new Error('Sessao expirada');
   }
-  if(!r.ok) throw new Error(d.detail || text || 'Erro');
+  if(!r.ok) {
+    var detail = d.detail || '';
+    var message = d.message || '';
+    if(r.status === 404 && message === 'Application not found') {
+      throw new Error('Aplicacao nao encontrada no provedor (Railway). Verifique dominio, deploy ativo e roteamento /api.');
+    }
+    throw new Error(detail || message || text || 'Erro');
+  }
   return d;
 }
 
